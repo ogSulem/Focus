@@ -23,6 +23,8 @@ import { UpcomingDeadlinesWidget } from '@/components/upcoming-deadlines-widget'
 import { getDashboardData } from '@/lib/api';
 import { OnboardingModal } from '@/components/onboarding-modal';
 import { DeadlineNotifier } from '@/components/deadline-notifier';
+import { IntelligenceStoryCard } from '@/components/intelligence-story-card';
+import { ExperimentReportCard } from '@/components/experiment-report-card';
 
 export default async function Home() {
   // Read access token from the secure httpOnly cookie set by /api/auth/set
@@ -337,6 +339,9 @@ export default async function Home() {
           <WeeklyTrendsCard apiUrl={apiUrl} token={token} />
         </section>
 
+        {/* ── Intelligence Storytelling ── */}
+        <IntelligenceStoryCard intelligence={data.intelligence} />
+
         {/* ── Annual Activity Heatmap ── */}
         <YearlyHeatmap apiUrl={apiUrl} token={token} />
 
@@ -357,6 +362,9 @@ export default async function Home() {
 
         {/* ── Analytics Summary ── */}
         <AnalyticsSummaryCard apiUrl={apiUrl} token={token} />
+
+        {/* ── Experiment Report ── */}
+        <ExperimentReportCard report={data.experimentReport} />
 
         {/* ── Achievements & Gamification ── */}
         <section id="ai-section" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr)', gap: 14, marginBottom: 14 }}>

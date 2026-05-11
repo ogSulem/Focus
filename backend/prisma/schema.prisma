@@ -19,6 +19,20 @@ enum TaskStatus {
   DONE
 }
 
+enum UserEventType {
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_STATUS_CHANGED
+  TASK_COMPLETED
+  TASK_DELETED
+  HABIT_CREATED
+  HABIT_TRACKED
+  HABIT_UNTRACKED
+  HABIT_DELETED
+  FOCUS_SESSION_COMPLETED
+  RECOMMENDATION_VIEWED
+}
+
 model User {
   id               String            @id @default(cuid())
   email            String            @unique
@@ -33,6 +47,7 @@ model User {
   notes            Note[]
   goals            Goal[]
   focusSessions    FocusSession[]
+  events           UserEvent[]
 }
 
 model Task {
@@ -135,4 +150,19 @@ model FocusSession {
 
   @@index([userId])
   @@index([userId, completedAt])
+}
+
+model UserEvent {
+  id        String        @id @default(cuid())
+  userId    String
+  type      UserEventType
+  entityId  String?
+  score     Float?
+  payload   Json          @default("{}")
+  createdAt DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, type, createdAt])
 }

@@ -129,6 +129,14 @@ NEXT_PUBLIC_API_URL=http://localhost:3001/api npm run dev
 | GET | /api/analytics/trends | Неделя-к-неделе сравнение |
 | GET | /api/analytics/heatmap | GitHub-style годовая тепловая карта |
 | GET | /api/analytics/recommendations | AI-рекомендации (rule-based) |
+| GET | /api/analytics/intelligence?energy=low\|medium\|high | Адаптивное планирование + прогнозы рисков + explainable score |
+| GET | /api/analytics/experiment-report | Before/after отчёт (7 дней vs предыдущие 7 дней) |
+
+### Events / Audit
+| Метод | Путь | Описание |
+|-------|------|----------|
+| GET | /api/events?limit=40 | Таймлайн пользовательских событий (audit trail) |
+| GET | /api/events/experiment-report | Метрики эксперимента для научной части |
 
 ### Telegram Bridge
 | Метод | Путь | Описание |
@@ -170,6 +178,18 @@ NEXT_PUBLIC_API_URL=http://localhost:3001/api npm run dev
 ### 🔔 Уведомления
 - **Notification Bell** — badge с просроченными задачами, dismiss per item
 - **Toast system** — success/error/info уведомления с анимацией
+
+### 🧠 Интеллектуальное ядро (новое)
+- **Adaptive Planning Engine** — score-приоритизация задач с учетом дедлайна, важности, возраста задачи и текущей энергии пользователя
+- **Risk Forecasting** — прогноз риска срыва дедлайна по каждой активной задаче с объяснением факторов
+- **Habit Success Probability** — вероятность удержания привычек на 7 дней вперед + confidence level
+- **Explainable Recommendations** — рекомендации возвращаются с числовым score и полем `reason` (почему совет выдан)
+- **Event/Audit Layer** — событийный контур (`UserEvent`) фиксирует ключевые действия пользователя для аналитики и доказательной базы диплома
+
+### 🧪 Научная ценность (новое)
+- **Before/After метрики** по окну 14 дней (7 + 7): completed tasks, completion rate, overdue, habit completions, focus minutes
+- **Экспериментальный блок на дашборде** с измеримым эффектом внедрения интеллектуального модуля
+- **Формулы модели** в API (`modelMeta`) для прозрачности и обоснования методики в ВКР
 
 ### ⚙️ Настройки
 - **Profile Settings** — обновление имени пользователя

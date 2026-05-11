@@ -16,6 +16,7 @@ import { NotesModule } from './notes/notes.module';
 import { GoalsModule } from './goals/goals.module';
 import { FocusSessionsModule } from './focus-sessions/focus-sessions.module';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     NotesModule,
     GoalsModule,
     FocusSessionsModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [

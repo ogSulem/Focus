@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { TaskStatus } from '@prisma/client';
+import { TaskPriority, TaskStatus, UserEventType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventsService, ExperimentReport } from '../events/events.service';
 
 export interface ProductivityPoint {
   date: string;
@@ -10,6 +11,7 @@ export interface ProductivityPoint {
 
 export interface RecommendationPayload {
   recommendations: string[];
+  scored?: ScoredRecommendation[];
   activityBuckets?: {
     morning: number;
     afternoon: number;
@@ -41,9 +43,61 @@ export interface AnalyticsSummary {
   };
 }
 
+export interface ScoredRecommendation {
+  title: string;
+  description: string;
+  score: number;
+  reason: string;
+}
+
+export interface PlannedTask {
+  id: string;
+  title: string;
+  score: number;
+  priority: TaskPriority;
+  status: TaskStatus;
+  deadline: string | null;
+  recommendedWindow: 'morning' | 'afternoon' | 'evening' | 'night';
+  reasons: string[];
+}
+
+export interface TaskRiskForecast {
+  id: string;
+  title: string;
+  riskPercent: number;
+  factors: string[];
+}
+
+export interface HabitForecast {
+  id: string;
+  name: string;
+  probability7dPercent: number;
+  confidence: 'low' | 'medium' | 'high';
+}
+
+export interface IntelligencePayload {
+  adaptivePlanning: {
+    energyLevel: 'low' | 'medium' | 'high';
+    prioritizedTasks: PlannedTask[];
+  };
+  predictions: {
+    deadlineRisk: TaskRiskForecast[];
+    habitSuccess: HabitForecast[];
+  };
+  recommendations: ScoredRecommendation[];
+  modelMeta: {
+    planningFormula: string;
+    predictionFormula: string;
+    explainability: string;
+  };
+}
+
 @Injectable()
 export class AnalyticsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventsService: EventsService,
+  ) {}
 
   async getWeekly(userId: string): Promise<ProductivityPoint[]> {
     return this.getForPeriod(userId, 7);
@@ -159,6 +213,39 @@ export class AnalyticsService {
   }
 
   async getRecommendations(userId: string): Promise<RecommendationPayload> {
+    const intelligence = await this.getIntelligence(userId, 'medium');
+    const scored = intelligence.recommendations.slice(0, 6);
+    const toEmoji = (score: number) => (score >= 80 ? '🚀' : score >= 60 ? '💡' : '🧭');
+
+    await this.eventsService.track(userId, UserEventType.RECOMMENDATION_VIEWED, {
+      score:
+        scored.length > 0
+          ? Math.round(
+              scored.reduce((acc, recommendation) => acc + recommendation.score, 0) /
+                scored.length,
+            )
+          : 0,
+      payload: {
+        count: scored.length,
+      },
+    });
+
+    return {
+      recommendations: scored.map(
+        (recommendation) =>
+          `${toEmoji(recommendation.score)} ${recommendation.title}: ${recommendation.description}`,
+      ),
+      scored,
+      activityBuckets: this.extractActivityBuckets(
+        intelligence.adaptivePlanning.prioritizedTasks,
+      ),
+    };
+  }
+
+  async getIntelligence(
+    userId: string,
+    energyLevel: 'low' | 'medium' | 'high' = 'medium',
+  ): Promise<IntelligencePayload> {
     const [tasks, habits, allTasks] = await Promise.all([
       this.prisma.task.findMany({
         where: { userId, status: TaskStatus.DONE, completedAt: { not: null } },
@@ -176,16 +263,63 @@ export class AnalyticsService {
       }),
     ]);
 
-    const recs: string[] = [];
+    const recs: ScoredRecommendation[] = [];
     const buckets = { morning: 0, afternoon: 0, evening: 0, night: 0 };
 
+    const pendingTasks = await this.prisma.task.findMany({
+      where: { userId, status: { not: TaskStatus.DONE } },
+      select: {
+        id: true,
+        title: true,
+        priority: true,
+        status: true,
+        deadline: true,
+        createdAt: true,
+      },
+      take: 200,
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const focusSessions = await this.prisma.focusSession.findMany({
+      where: { userId, phase: 'focus' },
+      select: { durationMin: true, completedAt: true },
+      take: 400,
+      orderBy: { completedAt: 'desc' },
+    });
+
     if (tasks.length === 0) {
+      const coldStartRecommendations: ScoredRecommendation[] = [
+        {
+          title: 'Начните с ритма 3 задач в день',
+          description:
+            'Сформируйте базовый ритм на 5–7 дней, чтобы модель начала давать персонализированные прогнозы.',
+          score: 74,
+          reason: 'Недостаточно исторических данных для персонального профиля.',
+        },
+        {
+          title: 'Добавьте привычки-стабилизаторы',
+          description:
+            'Введите 1–2 ежедневные привычки (планирование, deep work), это улучшит предсказуемость продуктивности.',
+          score: 68,
+          reason: 'Стабильные привычки увеличивают качество прогноза.',
+        },
+      ];
       return {
-        recommendations: [
-          '🌱 Начните с 3 небольших задач в день для формирования ритма работы.',
-          '📊 Фиксируйте выполнение задач — через неделю система даст точные инсайты.',
-          '⏱ Попробуйте технику Pomodoro: 25 минут фокус, 5 минут отдых.',
-        ],
+        adaptivePlanning: {
+          energyLevel,
+          prioritizedTasks: [],
+        },
+        predictions: {
+          deadlineRisk: [],
+          habitSuccess: [],
+        },
+        recommendations: coldStartRecommendations,
+        modelMeta: {
+          planningFormula:
+            'score = urgency + priority + age + energyFit + focusFit - overloadPenalty',
+          predictionFormula: 'risk = deadlinePressure + backlogPressure - executionConsistency',
+          explainability: 'Каждый результат сопровождается факторами и вкладом в итоговый score.',
+        },
       };
     }
 
@@ -203,20 +337,17 @@ export class AnalyticsService {
       evening: 'вечер (18–24)',
       night: 'ночь (0–6)',
     };
-    const periodEmoji: Record<string, string> = {
-      morning: '🌅',
-      afternoon: '☀️',
-      evening: '🌆',
-      night: '🌙',
-    };
-
     const sorted = Object.entries(buckets).sort((a, b) => b[1] - a[1]);
     const bestPeriod = sorted[0]?.[0] ?? 'morning';
     const worstPeriod = sorted[sorted.length - 1]?.[0] ?? 'night';
 
-    recs.push(
-      `${periodEmoji[bestPeriod]} Пик продуктивности: ${periodMap[bestPeriod]}. Планируйте самые важные задачи именно в это время.`,
-    );
+    recs.push({
+      title: `Пик продуктивности: ${periodMap[bestPeriod]}`,
+      description:
+        'Ставьте стратегические и сложные задачи в это окно — вероятность завершения выше.',
+      score: 88,
+      reason: `Максимальная историческая активность в период ${periodMap[bestPeriod]}.`,
+    });
 
     // Day-of-week analysis
     const dayBuckets = Array(7).fill(0) as number[];
@@ -226,16 +357,24 @@ export class AnalyticsService {
     const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
     const bestDayIdx = dayBuckets.indexOf(Math.max(...dayBuckets));
     if (dayBuckets[bestDayIdx] > 0) {
-      recs.push(
-        `📅 Лучший день недели: ${dayNames[bestDayIdx]} (${dayBuckets[bestDayIdx]} задач выполнено). Концентрируйте ключевые задачи на этот день.`,
-      );
+      recs.push({
+        title: `Сильный день недели: ${dayNames[bestDayIdx]}`,
+        description:
+          'Планируйте на этот день задачи с высокой ценностью и дедлайнами.',
+        score: 79,
+        reason: `На ${dayNames[bestDayIdx]} приходится максимум выполненных задач.`,
+      });
     }
 
     // Low activity period recommendation
     if (buckets[worstPeriod as keyof typeof buckets] < tasks.length * 0.1) {
-      recs.push(
-        `⚡ Низкая активность в период ${periodMap[worstPeriod]}. Используйте это время для лёгких задач: email, чтение, планирование.`,
-      );
+      recs.push({
+        title: `Провал активности: ${periodMap[worstPeriod]}`,
+        description:
+          'Оставляйте на это окно рутину и микрозадачи, а не критичные deliverables.',
+        score: 72,
+        reason: 'В окне активности зафиксирован минимальный объём завершений.',
+      });
     }
 
     // Overdue tasks warning
@@ -244,9 +383,13 @@ export class AnalyticsService {
       (t) => t.deadline && t.deadline < now && t.status !== TaskStatus.DONE,
     ).length;
     if (overdue > 0) {
-      recs.push(
-        `⚠️ ${overdue} задач${overdue > 1 ? 'и' : 'а'} просрочен${overdue > 1 ? 'о' : 'а'}. Разберитесь с ними первыми или перенесите дедлайн — это снизит стресс.`,
-      );
+      recs.push({
+        title: `Просрочки в бэклоге: ${overdue}`,
+        description:
+          'Сначала закройте просроченные задачи или пересогласуйте дедлайны, чтобы снизить риск срыва плана.',
+        score: 91,
+        reason: 'Просрочки оказывают максимальное негативное влияние на прогноз.',
+      });
     }
 
     // High priority tasks in backlog
@@ -254,17 +397,24 @@ export class AnalyticsService {
       (t) => t.priority === 'HIGH' && t.status === TaskStatus.TODO,
     ).length;
     if (highPrioTodo > 0) {
-      recs.push(
-        `🔴 ${highPrioTodo} задач высокого приоритета ждёт начала. Возьмите одну в работу прямо сейчас.`,
-      );
+      recs.push({
+        title: `Высокий приоритет в очереди: ${highPrioTodo}`,
+        description:
+          'Переведите хотя бы одну high-priority задачу в IN_PROGRESS в текущий рабочий блок.',
+        score: 84,
+        reason: 'Сейчас критичные задачи стоят в очереди без активного исполнения.',
+      });
     }
 
     // Habit streak advice
     const bestHabit = habits.sort((a, b) => b.streak - a.streak)[0];
     if (bestHabit && bestHabit.streak >= 7) {
-      recs.push(
-        `🔥 Ваш лучший streak по привычке "${bestHabit.name}": ${bestHabit.streak} дней! Продолжайте — через ${21 - bestHabit.streak > 0 ? 21 - bestHabit.streak : 0} дней привычка станет автоматической.`,
-      );
+      recs.push({
+        title: `Сильная привычка: ${bestHabit.name}`,
+        description: `Сохраните streak (${bestHabit.streak} дн.) — это усиливает устойчивость рабочих циклов.`,
+        score: 77,
+        reason: 'Высокий streak коррелирует с ростом ежедневного completion rate.',
+      });
     }
 
     // Completion velocity
@@ -275,20 +425,68 @@ export class AnalyticsService {
     }).length;
     const dailyRate = Math.round((recent7 / 7) * 10) / 10;
     if (dailyRate > 0) {
-      recs.push(
-        `📈 Средний темп: ${dailyRate} задач/день за последнюю неделю. ${dailyRate >= 3 ? 'Отличный ритм!' : 'Постарайтесь добавить ещё 1–2 задачи в день.'}`,
-      );
+      recs.push({
+        title: `Темп выполнения: ${dailyRate} задач/день`,
+        description:
+          dailyRate >= 3
+            ? 'Стабильный высокий темп — можно добавлять более амбициозные цели.'
+            : 'Добавьте 1–2 задачи в день для выхода на устойчивый режим.',
+        score: dailyRate >= 3 ? 83 : 66,
+        reason: 'Оценка строится на последних 7 днях реального выполнения.',
+      });
     }
+    const focusAvg =
+      focusSessions.length > 0
+        ? Math.round(
+            focusSessions.reduce((acc, session) => acc + session.durationMin, 0) /
+              focusSessions.length,
+          )
+        : 25;
+    recs.push({
+      title: 'Управление энергией через focus-сессии',
+      description: `Ваш оптимальный фокус-блок сейчас около ${focusAvg} мин. Настройте deep work под этот интервал.`,
+      score: 70,
+      reason: 'Рекомендация вычислена по истории focus-сессий.',
+    });
 
-    // Pomodoro generic tip
-    recs.push(
-      '⏱ Правило 52/17: работайте 52 минуты, отдыхайте 17 — это оптимально для глубокого фокуса по данным исследований.',
+    const prioritizedTasks = this.buildTaskPlan(
+      pendingTasks,
+      energyLevel,
+      bestPeriod as 'morning' | 'afternoon' | 'evening' | 'night',
+      focusAvg,
     );
 
+    const deadlineRisk = this.buildTaskRiskForecast(
+      pendingTasks,
+      allTasks.length > 0 ? overdue / allTasks.length : 0,
+      tasks.length > 0 ? recent7 / 7 : 0,
+    );
+
+    const habitSuccess = this.buildHabitForecast(habits);
+
     return {
-      recommendations: recs.slice(0, 6),
-      activityBuckets: buckets,
+      adaptivePlanning: {
+        energyLevel,
+        prioritizedTasks: prioritizedTasks.slice(0, 8),
+      },
+      predictions: {
+        deadlineRisk: deadlineRisk.slice(0, 8),
+        habitSuccess,
+      },
+      recommendations: recs.sort((a, b) => b.score - a.score).slice(0, 6),
+      modelMeta: {
+        planningFormula:
+          'score = deadlinePressure(35) + priority(25) + waitingTime(15) + energyFit(15) + focusFit(10)',
+        predictionFormula:
+          'risk = overdueSignal + deadlineDistance + backlogLoad - executionVelocity',
+        explainability:
+          'Каждый прогноз и приоритизация возвращают список факторов (reasons/factors), влияющих на итог.',
+      },
     };
+  }
+
+  async getExperimentReport(userId: string): Promise<ExperimentReport> {
+    return this.eventsService.getExperimentReport(userId);
   }
 
   async getOverview(userId: string): Promise<OverviewPayload> {
@@ -549,6 +747,181 @@ export class AnalyticsService {
       },
       trend,
     };
+  }
+
+  private buildTaskPlan(
+    pendingTasks: Array<{
+      id: string;
+      title: string;
+      priority: TaskPriority;
+      status: TaskStatus;
+      deadline: Date | null;
+      createdAt: Date;
+    }>,
+    energyLevel: 'low' | 'medium' | 'high',
+    bestWindow: 'morning' | 'afternoon' | 'evening' | 'night',
+    avgFocusMinutes: number,
+  ): PlannedTask[] {
+    const now = Date.now();
+    const priorityWeight: Record<TaskPriority, number> = {
+      HIGH: 25,
+      MEDIUM: 16,
+      LOW: 8,
+    };
+
+    return pendingTasks
+      .map((task) => {
+        const reasons: string[] = [];
+        const ageDays = Math.max(0, (now - task.createdAt.getTime()) / 86_400_000);
+        const ageScore = Math.min(ageDays * 1.5, 15);
+        if (ageScore >= 8) reasons.push('долго в бэклоге');
+
+        let deadlinePressure = 0;
+        if (task.deadline) {
+          const daysLeft = (task.deadline.getTime() - now) / 86_400_000;
+          if (daysLeft <= 0) {
+            deadlinePressure = 35;
+            reasons.push('дедлайн уже просрочен');
+          } else if (daysLeft <= 1) {
+            deadlinePressure = 30;
+            reasons.push('дедлайн в течение суток');
+          } else if (daysLeft <= 3) {
+            deadlinePressure = 24;
+            reasons.push('дедлайн в ближайшие 3 дня');
+          } else {
+            deadlinePressure = Math.max(6, 20 - daysLeft);
+          }
+        } else {
+          deadlinePressure = 10;
+        }
+
+        const energyFit =
+          energyLevel === 'high'
+            ? task.priority === 'HIGH'
+              ? 15
+              : 10
+            : energyLevel === 'low'
+              ? task.priority === 'LOW'
+                ? 15
+                : 8
+              : 12;
+
+        const focusFit = Math.min(Math.max(avgFocusMinutes - 20, 0), 10);
+        const score = Math.round(
+          deadlinePressure + priorityWeight[task.priority] + ageScore + energyFit + focusFit,
+        );
+
+        if (task.priority === 'HIGH') reasons.push('высокий приоритет');
+        if (energyFit >= 12) reasons.push('соответствует текущему уровню энергии');
+
+        return {
+          id: task.id,
+          title: task.title,
+          score: Math.min(score, 100),
+          priority: task.priority,
+          status: task.status,
+          deadline: task.deadline ? task.deadline.toISOString() : null,
+          recommendedWindow: bestWindow,
+          reasons,
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+  }
+
+  private buildTaskRiskForecast(
+    pendingTasks: Array<{
+      id: string;
+      title: string;
+      priority: TaskPriority;
+      deadline: Date | null;
+      createdAt: Date;
+    }>,
+    overdueRatio: number,
+    velocity: number,
+  ): TaskRiskForecast[] {
+    const now = Date.now();
+    return pendingTasks
+      .map((task) => {
+        const factors: string[] = [];
+        let risk = 20 + overdueRatio * 30 - Math.min(velocity * 3, 15);
+
+        const ageDays = (now - task.createdAt.getTime()) / 86_400_000;
+        if (ageDays > 14) {
+          risk += 15;
+          factors.push('долго без завершения');
+        } else if (ageDays > 7) {
+          risk += 8;
+          factors.push('задача в бэклоге более недели');
+        }
+
+        if (task.deadline) {
+          const daysLeft = (task.deadline.getTime() - now) / 86_400_000;
+          if (daysLeft <= 0) {
+            risk += 35;
+            factors.push('дедлайн уже нарушен');
+          } else if (daysLeft <= 2) {
+            risk += 22;
+            factors.push('критически мало времени до дедлайна');
+          } else if (daysLeft <= 5) {
+            risk += 12;
+            factors.push('короткое окно до дедлайна');
+          }
+        } else {
+          factors.push('нет дедлайна, риск умеренный');
+        }
+
+        if (task.priority === 'HIGH') {
+          risk += 8;
+          factors.push('высокая цена просрочки');
+        }
+
+        return {
+          id: task.id,
+          title: task.title,
+          riskPercent: Math.max(5, Math.min(99, Math.round(risk))),
+          factors,
+        };
+      })
+      .sort((a, b) => b.riskPercent - a.riskPercent);
+  }
+
+  private buildHabitForecast(
+    habits: Array<{ id?: string; name: string; streak: number; completedDays: unknown }>,
+  ): HabitForecast[] {
+    const now = new Date();
+    const windowStart = new Date(now);
+    windowStart.setDate(now.getDate() - 29);
+    const startStr = windowStart.toISOString().slice(0, 10);
+
+    return habits.map((habit) => {
+      const days = Array.isArray(habit.completedDays)
+        ? (habit.completedDays as unknown[]).filter(
+            (day): day is string => typeof day === 'string',
+          )
+        : [];
+      const completed30 = days.filter((day) => day >= startStr).length;
+      const consistency = completed30 / 30;
+      const streakBoost = Math.min(habit.streak / 30, 1) * 0.25;
+      const probability = Math.round(Math.min((consistency + streakBoost) * 100, 99));
+
+      return {
+        id: habit.id ?? habit.name,
+        name: habit.name,
+        probability7dPercent: Math.max(15, probability),
+        confidence:
+          completed30 >= 16 ? 'high' : completed30 >= 8 ? 'medium' : 'low',
+      };
+    });
+  }
+
+  private extractActivityBuckets(
+    tasks: PlannedTask[],
+  ): { morning: number; afternoon: number; evening: number; night: number } {
+    const buckets = { morning: 0, afternoon: 0, evening: 0, night: 0 };
+    tasks.forEach((task) => {
+      buckets[task.recommendedWindow] += 1;
+    });
+    return buckets;
   }
 }
 

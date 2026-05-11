@@ -31,12 +31,76 @@ export interface ProductivityPoint {
 
 export interface RecommendationPayload {
   recommendations: string[];
+  scored?: ScoredRecommendation[];
   activityBuckets?: {
     morning: number;
     afternoon: number;
     evening: number;
     night: number;
   };
+}
+
+export interface ScoredRecommendation {
+  title: string;
+  description: string;
+  score: number;
+  reason: string;
+}
+
+export interface PlannedTask {
+  id: string;
+  title: string;
+  score: number;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
+  deadline: string | null;
+  recommendedWindow: 'morning' | 'afternoon' | 'evening' | 'night';
+  reasons: string[];
+}
+
+export interface TaskRiskForecast {
+  id: string;
+  title: string;
+  riskPercent: number;
+  factors: string[];
+}
+
+export interface HabitForecast {
+  id: string;
+  name: string;
+  probability7dPercent: number;
+  confidence: 'low' | 'medium' | 'high';
+}
+
+export interface IntelligencePayload {
+  adaptivePlanning: {
+    energyLevel: 'low' | 'medium' | 'high';
+    prioritizedTasks: PlannedTask[];
+  };
+  predictions: {
+    deadlineRisk: TaskRiskForecast[];
+    habitSuccess: HabitForecast[];
+  };
+  recommendations: ScoredRecommendation[];
+  modelMeta: {
+    planningFormula: string;
+    predictionFormula: string;
+    explainability: string;
+  };
+}
+
+export interface ExperimentMetrics {
+  completedTasks: number;
+  completionRate: number;
+  overdueOpenTasks: number;
+  habitCompletions: number;
+  focusMinutes: number;
+}
+
+export interface ExperimentReport {
+  before: ExperimentMetrics;
+  after: ExperimentMetrics;
+  delta: ExperimentMetrics;
 }
 
 export interface UserProfile {
@@ -53,6 +117,8 @@ export interface DashboardData {
   habits: Habit[];
   weekly: ProductivityPoint[];
   recommendations: RecommendationPayload;
+  intelligence: IntelligencePayload;
+  experimentReport: ExperimentReport;
   user?: UserProfile;
 }
 
@@ -192,6 +258,89 @@ const DEMO_DATA: DashboardData = {
       '⏱ Работайте блоками 50/10: 50 минут фокус + 10 минут отдых. Это даст +40% продуктивности.',
     ],
   },
+  intelligence: {
+    adaptivePlanning: {
+      energyLevel: 'medium',
+      prioritizedTasks: [
+        {
+          id: 'demo-plan-1',
+          title: 'Закрыть блокер по дипломному модулю аналитики',
+          score: 92,
+          priority: 'HIGH',
+          status: 'IN_PROGRESS',
+          deadline: new Date(Date.now() + 86_400_000).toISOString(),
+          recommendedWindow: 'morning',
+          reasons: ['высокий приоритет', 'дедлайн в ближайшие 24 часа'],
+        },
+        {
+          id: 'demo-plan-2',
+          title: 'Подготовить визуализации для защиты',
+          score: 84,
+          priority: 'HIGH',
+          status: 'TODO',
+          deadline: new Date(Date.now() + 2 * 86_400_000).toISOString(),
+          recommendedWindow: 'afternoon',
+          reasons: ['дедлайн в ближайшие 3 дня', 'соответствует энергии'],
+        },
+      ],
+    },
+    predictions: {
+      deadlineRisk: [
+        {
+          id: 'demo-risk-1',
+          title: 'Документация API',
+          riskPercent: 78,
+          factors: ['долго в бэклоге', 'короткое окно до дедлайна'],
+        },
+      ],
+      habitSuccess: [
+        {
+          id: 'demo-habit-1',
+          name: 'Планирование дня',
+          probability7dPercent: 87,
+          confidence: 'high',
+        },
+      ],
+    },
+    recommendations: [
+      {
+        title: 'Сфокусируйтесь на утреннем deep-work окне',
+        description: 'Выносите стратегические задачи на 09:00–12:00 для роста completion rate.',
+        score: 89,
+        reason: 'Исторический пик выполнения в утренние часы.',
+      },
+    ],
+    modelMeta: {
+      planningFormula:
+        'score = deadlinePressure + priority + waitingTime + energyFit + focusFit',
+      predictionFormula:
+        'risk = overdueSignal + deadlineDistance + backlogLoad - executionVelocity',
+      explainability: 'Каждый вывод содержит факторы влияния.',
+    },
+  },
+  experimentReport: {
+    before: {
+      completedTasks: 12,
+      completionRate: 54,
+      overdueOpenTasks: 6,
+      habitCompletions: 13,
+      focusMinutes: 290,
+    },
+    after: {
+      completedTasks: 19,
+      completionRate: 73,
+      overdueOpenTasks: 3,
+      habitCompletions: 22,
+      focusMinutes: 470,
+    },
+    delta: {
+      completedTasks: 7,
+      completionRate: 19,
+      overdueOpenTasks: -3,
+      habitCompletions: 9,
+      focusMinutes: 180,
+    },
+  },
 };
 
 export async function getDashboardData(token?: string): Promise<DashboardData> {
@@ -200,13 +349,16 @@ export async function getDashboardData(token?: string): Promise<DashboardData> {
   }
 
   try {
-    const [tasks, habits, weekly, recommendations, user] = await Promise.all([
+    const [tasks, habits, weekly, recommendations, intelligence, experimentReport, user] =
+      await Promise.all([
       apiFetch<Task[]>('/tasks', token),
       apiFetch<Habit[]>('/habits', token),
       apiFetch<ProductivityPoint[]>('/analytics/weekly', token),
       apiFetch<RecommendationPayload>('/analytics/recommendations', token),
+      apiFetch<IntelligencePayload>('/analytics/intelligence?energy=medium', token),
+      apiFetch<ExperimentReport>('/analytics/experiment-report', token),
       apiFetch<UserProfile>('/users/me', token).catch(() => null),
-    ]);
+      ]);
 
     return {
       mode: 'live',
@@ -219,6 +371,8 @@ export async function getDashboardData(token?: string): Promise<DashboardData> {
       })),
       weekly,
       recommendations,
+      intelligence,
+      experimentReport,
       user: user ?? undefined,
     };
   } catch {

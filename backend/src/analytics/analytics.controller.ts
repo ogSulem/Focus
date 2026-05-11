@@ -1,5 +1,5 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy';
@@ -7,11 +7,13 @@ import {
   AnalyticsService,
   AnalyticsSummary,
   HeatmapDay,
+  IntelligencePayload,
   OverviewPayload,
   ProductivityPoint,
   RecommendationPayload,
   TrendsPayload,
 } from './analytics.service';
+import { ExperimentReport } from '../events/events.service';
 
 @ApiTags('analytics')
 @UseGuards(JwtAuthGuard)
@@ -52,6 +54,32 @@ export class AnalyticsController {
     @CurrentUser() user: JwtPayload,
   ): Promise<RecommendationPayload> {
     return this.analyticsService.getRecommendations(user.sub);
+  }
+
+  @Get('intelligence')
+  @ApiOperation({
+    summary:
+      'Adaptive planning + risk forecasts + explainable score recommendations',
+  })
+  @ApiQuery({
+    name: 'energy',
+    required: false,
+    enum: ['low', 'medium', 'high'],
+  })
+  getIntelligence(
+    @CurrentUser() user: JwtPayload,
+    @Query('energy') energy?: 'low' | 'medium' | 'high',
+  ): Promise<IntelligencePayload> {
+    return this.analyticsService.getIntelligence(user.sub, energy ?? 'medium');
+  }
+
+  @Get('experiment-report')
+  @ApiOperation({
+    summary:
+      'Scientific before/after report for the last 14 days (7 days vs previous 7 days)',
+  })
+  getExperimentReport(@CurrentUser() user: JwtPayload): Promise<ExperimentReport> {
+    return this.analyticsService.getExperimentReport(user.sub);
   }
 
   @Get('trends')
