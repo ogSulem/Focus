@@ -123,6 +123,7 @@ export class EventsService {
           where: {
             userId,
             status: { not: TaskStatus.DONE },
+            createdAt: { lt: end },
             deadline: { lt: end },
           },
         }),

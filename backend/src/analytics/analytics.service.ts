@@ -794,6 +794,12 @@ export class AnalyticsService {
         if (ageScore >= 8) reasons.push('долго в бэклоге');
 
         let deadlinePressure = 0;
+        // Weight rationale:
+        // - deadlinePressure up to 35: strongest impact because deadline misses are most costly.
+        // - priorityWeight up to 25: keeps product/business impact as second signal.
+        // - ageScore up to 15: prevents long-tail backlog stagnation.
+        // - energyFit up to 15: adapts queue to current cognitive bandwidth.
+        // - focusFit up to 10: aligns plan with empirically observed focus-session capacity.
         if (task.deadline) {
           const daysLeft = (task.deadline.getTime() - now) / 86_400_000;
           if (daysLeft <= 0) {
