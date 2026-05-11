@@ -124,7 +124,7 @@ export class EventsService {
             userId,
             status: { not: TaskStatus.DONE },
             createdAt: { lt: end },
-            deadline: { lt: end },
+            deadline: { not: null, lt: end },
           },
         }),
         this.prisma.habit.findMany({

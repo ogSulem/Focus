@@ -129,7 +129,7 @@ let AnalyticsService = class AnalyticsService {
             }),
             this.prisma.habit.findMany({
                 where: { userId },
-                select: { streak: true, completedDays: true, name: true },
+                select: { id: true, streak: true, completedDays: true, name: true },
             }),
             this.prisma.task.findMany({
                 where: { userId },
@@ -650,7 +650,7 @@ let AnalyticsService = class AnalyticsService {
             const streakBoost = Math.min(habit.streak / 30, 1) * 0.25;
             const probability = Math.round(Math.min((consistency + streakBoost) * 100, 99));
             return {
-                id: habit.id ?? habit.name,
+                id: habit.id,
                 name: habit.name,
                 probability7dPercent: Math.max(15, probability),
                 confidence: completed30 >= 16 ? 'high' : completed30 >= 8 ? 'medium' : 'low',

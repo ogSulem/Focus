@@ -262,7 +262,7 @@ export class AnalyticsService {
       }),
       this.prisma.habit.findMany({
         where: { userId },
-        select: { streak: true, completedDays: true, name: true },
+        select: { id: true, streak: true, completedDays: true, name: true },
       }),
       this.prisma.task.findMany({
         where: { userId },
@@ -794,12 +794,6 @@ export class AnalyticsService {
         if (ageScore >= 8) reasons.push('долго в бэклоге');
 
         let deadlinePressure = 0;
-        // Weight rationale:
-        // - deadlinePressure up to 35: strongest impact because deadline misses are most costly.
-        // - priorityWeight up to 25: keeps product/business impact as second signal.
-        // - ageScore up to 15: prevents long-tail backlog stagnation.
-        // - energyFit up to 15: adapts queue to current cognitive bandwidth.
-        // - focusFit up to 10: aligns plan with empirically observed focus-session capacity.
         if (task.deadline) {
           const daysLeft = (task.deadline.getTime() - now) / 86_400_000;
           if (daysLeft <= 0) {
@@ -830,6 +824,12 @@ export class AnalyticsService {
               : 12;
 
         const focusFit = Math.min(Math.max(avgFocusMinutes - 20, 0), 10);
+        // Weight rationale:
+        // - deadlinePressure up to 35: strongest impact because deadline misses are most costly.
+        // - priorityWeight up to 25: keeps product/business impact as second signal.
+        // - ageScore up to 15: prevents long-tail backlog stagnation.
+        // - energyFit up to 15: adapts queue to current cognitive bandwidth.
+        // - focusFit up to 10: aligns plan with empirically observed focus-session capacity.
         const score = Math.round(
           deadlinePressure +
             priorityWeight[task.priority] +
@@ -915,7 +915,7 @@ export class AnalyticsService {
 
   private buildHabitForecast(
     habits: Array<{
-      id?: string;
+      id: string;
       name: string;
       streak: number;
       completedDays: unknown;
@@ -940,7 +940,7 @@ export class AnalyticsService {
       );
 
       return {
-        id: habit.id ?? habit.name,
+        id: habit.id,
         name: habit.name,
         probability7dPercent: Math.max(15, probability),
         confidence:
