@@ -6,12 +6,15 @@ import type { JwtPayload } from '../auth/strategies/jwt.strategy';
 import {
   AnalyticsService,
   AnalyticsSummary,
+  ArchetypePayload,
+  BurnoutIndexPayload,
   HeatmapDay,
   IntelligencePayload,
   OverviewPayload,
   ProductivityPoint,
   RecommendationPayload,
   TrendsPayload,
+  VelocityForecastPayload,
 } from './analytics.service';
 import { ExperimentReport } from '../events/events.service';
 
@@ -96,5 +99,33 @@ export class AnalyticsController {
   })
   getHeatmap(@CurrentUser() user: JwtPayload): Promise<HeatmapDay[]> {
     return this.analyticsService.getHeatmap(user.sub);
+  }
+}
+
+  @Get('burnout-index')
+  @ApiOperation({
+    summary:
+      'Cognitive load / burnout detection index (0–100) with factors and suggestions',
+  })
+  getBurnoutIndex(@CurrentUser() user: JwtPayload): Promise<BurnoutIndexPayload> {
+    return this.analyticsService.getBurnoutIndex(user.sub);
+  }
+
+  @Get('archetype')
+  @ApiOperation({
+    summary:
+      'Classify user productivity archetype based on historical task and habit patterns',
+  })
+  getArchetype(@CurrentUser() user: JwtPayload): Promise<ArchetypePayload> {
+    return this.analyticsService.getProductivityArchetype(user.sub);
+  }
+
+  @Get('velocity-forecast')
+  @ApiOperation({
+    summary:
+      'OLS linear regression velocity forecast: predicted completed tasks for next week + confidence interval',
+  })
+  getVelocityForecast(@CurrentUser() user: JwtPayload): Promise<VelocityForecastPayload> {
+    return this.analyticsService.getVelocityForecast(user.sub);
   }
 }
