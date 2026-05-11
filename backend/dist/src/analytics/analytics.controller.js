@@ -38,6 +38,12 @@ let AnalyticsController = class AnalyticsController {
     getRecommendations(user) {
         return this.analyticsService.getRecommendations(user.sub);
     }
+    getIntelligence(user, energy) {
+        return this.analyticsService.getIntelligence(user.sub, energy ?? 'medium');
+    }
+    getExperimentReport(user) {
+        return this.analyticsService.getExperimentReport(user.sub);
+    }
     getTrends(user) {
         return this.analyticsService.getTrends(user.sub);
     }
@@ -88,6 +94,32 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getRecommendations", null);
+__decorate([
+    (0, common_1.Get)('intelligence'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Adaptive planning + risk forecasts + explainable score recommendations',
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'energy',
+        required: false,
+        enum: ['low', 'medium', 'high'],
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('energy')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getIntelligence", null);
+__decorate([
+    (0, common_1.Get)('experiment-report'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Scientific before/after report for the last 14 days (7 days vs previous 7 days)',
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getExperimentReport", null);
 __decorate([
     (0, common_1.Get)('trends'),
     (0, swagger_1.ApiOperation)({ summary: 'Week-over-week trends comparison' }),

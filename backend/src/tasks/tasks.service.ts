@@ -225,16 +225,23 @@ export class TasksService {
     });
 
     if (statusChanged) {
-      await this.eventsService.track(userId, UserEventType.TASK_STATUS_CHANGED, {
-        entityId: updatedTask.id,
-        payload: {
-          fromStatus: existing.status,
-          toStatus: updatedTask.status,
+      await this.eventsService.track(
+        userId,
+        UserEventType.TASK_STATUS_CHANGED,
+        {
+          entityId: updatedTask.id,
+          payload: {
+            fromStatus: existing.status,
+            toStatus: updatedTask.status,
+          },
         },
-      });
+      );
     }
 
-    if (existing.status !== TaskStatus.DONE && updatedTask.status === TaskStatus.DONE) {
+    if (
+      existing.status !== TaskStatus.DONE &&
+      updatedTask.status === TaskStatus.DONE
+    ) {
       await this.eventsService.track(userId, UserEventType.TASK_COMPLETED, {
         entityId: updatedTask.id,
         payload: {

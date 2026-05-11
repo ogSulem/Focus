@@ -30,14 +30,18 @@ export class FocusSessionsService {
     });
 
     if (session.phase === 'focus') {
-      await this.eventsService.track(userId, UserEventType.FOCUS_SESSION_COMPLETED, {
-        entityId: session.id,
-        score: session.durationMin,
-        payload: {
-          durationMin: session.durationMin,
-          taskTitle: session.taskTitle,
+      await this.eventsService.track(
+        userId,
+        UserEventType.FOCUS_SESSION_COMPLETED,
+        {
+          entityId: session.id,
+          score: session.durationMin,
+          payload: {
+            durationMin: session.durationMin,
+            taskTitle: session.taskTitle,
+          },
         },
-      });
+      );
     }
 
     return session;

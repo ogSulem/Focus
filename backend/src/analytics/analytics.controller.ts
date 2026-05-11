@@ -78,7 +78,9 @@ export class AnalyticsController {
     summary:
       'Scientific before/after report for the last 14 days (7 days vs previous 7 days)',
   })
-  getExperimentReport(@CurrentUser() user: JwtPayload): Promise<ExperimentReport> {
+  getExperimentReport(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<ExperimentReport> {
     return this.analyticsService.getExperimentReport(user.sub);
   }
 

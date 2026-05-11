@@ -215,20 +215,27 @@ export class AnalyticsService {
   async getRecommendations(userId: string): Promise<RecommendationPayload> {
     const intelligence = await this.getIntelligence(userId, 'medium');
     const scored = intelligence.recommendations.slice(0, 6);
-    const toEmoji = (score: number) => (score >= 80 ? '🚀' : score >= 60 ? '💡' : '🧭');
+    const toEmoji = (score: number) =>
+      score >= 80 ? '🚀' : score >= 60 ? '💡' : '🧭';
 
-    await this.eventsService.track(userId, UserEventType.RECOMMENDATION_VIEWED, {
-      score:
-        scored.length > 0
-          ? Math.round(
-              scored.reduce((acc, recommendation) => acc + recommendation.score, 0) /
-                scored.length,
-            )
-          : 0,
-      payload: {
-        count: scored.length,
+    await this.eventsService.track(
+      userId,
+      UserEventType.RECOMMENDATION_VIEWED,
+      {
+        score:
+          scored.length > 0
+            ? Math.round(
+                scored.reduce(
+                  (acc, recommendation) => acc + recommendation.score,
+                  0,
+                ) / scored.length,
+              )
+            : 0,
+        payload: {
+          count: scored.length,
+        },
       },
-    });
+    );
 
     return {
       recommendations: scored.map(
@@ -317,8 +324,10 @@ export class AnalyticsService {
         modelMeta: {
           planningFormula:
             'score = urgency + priority + age + energyFit + focusFit - overloadPenalty',
-          predictionFormula: 'risk = deadlinePressure + backlogPressure - executionConsistency',
-          explainability: 'Каждый результат сопровождается факторами и вкладом в итоговый score.',
+          predictionFormula:
+            'risk = deadlinePressure + backlogPressure - executionConsistency',
+          explainability:
+            'Каждый результат сопровождается факторами и вкладом в итоговый score.',
         },
       };
     }
@@ -388,7 +397,8 @@ export class AnalyticsService {
         description:
           'Сначала закройте просроченные задачи или пересогласуйте дедлайны, чтобы снизить риск срыва плана.',
         score: 91,
-        reason: 'Просрочки оказывают максимальное негативное влияние на прогноз.',
+        reason:
+          'Просрочки оказывают максимальное негативное влияние на прогноз.',
       });
     }
 
@@ -402,7 +412,8 @@ export class AnalyticsService {
         description:
           'Переведите хотя бы одну high-priority задачу в IN_PROGRESS в текущий рабочий блок.',
         score: 84,
-        reason: 'Сейчас критичные задачи стоят в очереди без активного исполнения.',
+        reason:
+          'Сейчас критичные задачи стоят в очереди без активного исполнения.',
       });
     }
 
@@ -413,7 +424,8 @@ export class AnalyticsService {
         title: `Сильная привычка: ${bestHabit.name}`,
         description: `Сохраните streak (${bestHabit.streak} дн.) — это усиливает устойчивость рабочих циклов.`,
         score: 77,
-        reason: 'Высокий streak коррелирует с ростом ежедневного completion rate.',
+        reason:
+          'Высокий streak коррелирует с ростом ежедневного completion rate.',
       });
     }
 
@@ -438,8 +450,10 @@ export class AnalyticsService {
     const focusAvg =
       focusSessions.length > 0
         ? Math.round(
-            focusSessions.reduce((acc, session) => acc + session.durationMin, 0) /
-              focusSessions.length,
+            focusSessions.reduce(
+              (acc, session) => acc + session.durationMin,
+              0,
+            ) / focusSessions.length,
           )
         : 25;
     recs.push({
@@ -772,7 +786,10 @@ export class AnalyticsService {
     return pendingTasks
       .map((task) => {
         const reasons: string[] = [];
-        const ageDays = Math.max(0, (now - task.createdAt.getTime()) / 86_400_000);
+        const ageDays = Math.max(
+          0,
+          (now - task.createdAt.getTime()) / 86_400_000,
+        );
         const ageScore = Math.min(ageDays * 1.5, 15);
         if (ageScore >= 8) reasons.push('долго в бэклоге');
 
@@ -808,11 +825,16 @@ export class AnalyticsService {
 
         const focusFit = Math.min(Math.max(avgFocusMinutes - 20, 0), 10);
         const score = Math.round(
-          deadlinePressure + priorityWeight[task.priority] + ageScore + energyFit + focusFit,
+          deadlinePressure +
+            priorityWeight[task.priority] +
+            ageScore +
+            energyFit +
+            focusFit,
         );
 
         if (task.priority === 'HIGH') reasons.push('высокий приоритет');
-        if (energyFit >= 12) reasons.push('соответствует текущему уровню энергии');
+        if (energyFit >= 12)
+          reasons.push('соответствует текущему уровню энергии');
 
         return {
           id: task.id,
@@ -886,7 +908,12 @@ export class AnalyticsService {
   }
 
   private buildHabitForecast(
-    habits: Array<{ id?: string; name: string; streak: number; completedDays: unknown }>,
+    habits: Array<{
+      id?: string;
+      name: string;
+      streak: number;
+      completedDays: unknown;
+    }>,
   ): HabitForecast[] {
     const now = new Date();
     const windowStart = new Date(now);
@@ -902,7 +929,9 @@ export class AnalyticsService {
       const completed30 = days.filter((day) => day >= startStr).length;
       const consistency = completed30 / 30;
       const streakBoost = Math.min(habit.streak / 30, 1) * 0.25;
-      const probability = Math.round(Math.min((consistency + streakBoost) * 100, 99));
+      const probability = Math.round(
+        Math.min((consistency + streakBoost) * 100, 99),
+      );
 
       return {
         id: habit.id ?? habit.name,
@@ -914,9 +943,12 @@ export class AnalyticsService {
     });
   }
 
-  private extractActivityBuckets(
-    tasks: PlannedTask[],
-  ): { morning: number; afternoon: number; evening: number; night: number } {
+  private extractActivityBuckets(tasks: PlannedTask[]): {
+    morning: number;
+    afternoon: number;
+    evening: number;
+    night: number;
+  } {
     const buckets = { morning: 0, afternoon: 0, evening: 0, night: 0 };
     tasks.forEach((task) => {
       buckets[task.recommendedWindow] += 1;

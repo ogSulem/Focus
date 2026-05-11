@@ -22,14 +22,20 @@ export class EventsController {
     @CurrentUser() user: JwtPayload,
     @Query('limit') limit?: string,
   ): Promise<EventTimelineItem[]> {
-    return this.eventsService.timeline(user.sub, limit ? parseInt(limit, 10) : 40);
+    return this.eventsService.timeline(
+      user.sub,
+      limit ? parseInt(limit, 10) : 40,
+    );
   }
 
   @Get('experiment-report')
   @ApiOperation({
-    summary: 'Get before/after productivity report (last 14 days split into 7+7)',
+    summary:
+      'Get before/after productivity report (last 14 days split into 7+7)',
   })
-  getExperimentReport(@CurrentUser() user: JwtPayload): Promise<ExperimentReport> {
+  getExperimentReport(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<ExperimentReport> {
     return this.eventsService.getExperimentReport(user.sub);
   }
 }

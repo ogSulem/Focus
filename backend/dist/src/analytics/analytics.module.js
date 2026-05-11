@@ -10,11 +10,13 @@ exports.AnalyticsModule = void 0;
 const common_1 = require("@nestjs/common");
 const analytics_service_1 = require("./analytics.service");
 const analytics_controller_1 = require("./analytics.controller");
+const events_module_1 = require("../events/events.module");
 let AnalyticsModule = class AnalyticsModule {
 };
 exports.AnalyticsModule = AnalyticsModule;
 exports.AnalyticsModule = AnalyticsModule = __decorate([
     (0, common_1.Module)({
+        imports: [events_module_1.EventsModule],
         providers: [analytics_service_1.AnalyticsService],
         controllers: [analytics_controller_1.AnalyticsController],
     })

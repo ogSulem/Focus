@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TaskStatus, UserEventType } from '@prisma/client';
+import { Prisma, TaskStatus, UserEventType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface EventTimelineItem {
@@ -50,7 +50,7 @@ export class EventsService {
         type,
         entityId: params.entityId,
         score: params.score,
-        payload: params.payload ?? {},
+        payload: (params.payload ?? {}) as Prisma.InputJsonValue,
       },
     });
   }
@@ -131,7 +131,11 @@ export class EventsService {
           select: { completedDays: true },
         }),
         this.prisma.focusSession.findMany({
-          where: { userId, completedAt: { gte: start, lt: end }, phase: 'focus' },
+          where: {
+            userId,
+            completedAt: { gte: start, lt: end },
+            phase: 'focus',
+          },
           select: { durationMin: true },
         }),
       ]);
@@ -148,7 +152,10 @@ export class EventsService {
       return acc + days.filter((day) => day >= startStr && day < endStr).length;
     }, 0);
 
-    const focusMinutes = sessions.reduce((acc, session) => acc + session.durationMin, 0);
+    const focusMinutes = sessions.reduce(
+      (acc, session) => acc + session.durationMin,
+      0,
+    );
     const completionRate =
       createdTasks > 0 ? round1((completedTasks / createdTasks) * 100) : 0;
 

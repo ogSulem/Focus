@@ -2,9 +2,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { TrackHabitDto } from './dto/track-habit.dto';
 import { UpdateHabitDto } from './dto/update-habit.dto';
+import { EventsService } from '../events/events.service';
 export declare class HabitsService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly eventsService;
+    constructor(prisma: PrismaService, eventsService: EventsService);
     findAll(userId: string): import("@prisma/client").Prisma.PrismaPromise<{
         name: string;
         id: string;
@@ -14,7 +16,7 @@ export declare class HabitsService {
         streak: number;
         completedDays: import("@prisma/client/runtime/library").JsonValue;
     }[]>;
-    create(userId: string, dto: CreateHabitDto): import("@prisma/client").Prisma.Prisma__HabitClient<{
+    create(userId: string, dto: CreateHabitDto): Promise<{
         name: string;
         id: string;
         createdAt: Date;
@@ -22,7 +24,7 @@ export declare class HabitsService {
         userId: string;
         streak: number;
         completedDays: import("@prisma/client/runtime/library").JsonValue;
-    }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    }>;
     update(userId: string, habitId: string, dto: UpdateHabitDto): Promise<{
         name: string;
         id: string;

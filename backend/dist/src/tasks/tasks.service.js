@@ -13,10 +13,13 @@ exports.TasksService = void 0;
 const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../prisma/prisma.service");
+const events_service_1 = require("../events/events.service");
 let TasksService = class TasksService {
     prisma;
-    constructor(prisma) {
+    eventsService;
+    constructor(prisma, eventsService) {
         this.prisma = prisma;
+        this.eventsService = eventsService;
     }
     findAll(userId, filter = {}) {
         const where = { userId };
@@ -111,8 +114,8 @@ let TasksService = class TasksService {
         }
         return task;
     }
-    create(userId, dto) {
-        return this.prisma.task.create({
+    async create(userId, dto) {
+        const task = await this.prisma.task.create({
             data: {
                 userId,
                 title: dto.title,
@@ -126,6 +129,23 @@ let TasksService = class TasksService {
                     []),
             },
         });
+        await this.eventsService.track(userId, client_1.UserEventType.TASK_CREATED, {
+            entityId: task.id,
+            payload: {
+                priority: task.priority,
+                status: task.status,
+                hasDeadline: Boolean(task.deadline),
+            },
+        });
+        if (task.status === client_1.TaskStatus.DONE) {
+            await this.eventsService.track(userId, client_1.UserEventType.TASK_COMPLETED, {
+                entityId: task.id,
+                payload: {
+                    source: 'create',
+                },
+            });
+        }
+        return task;
     }
     async update(userId, taskId, dto) {
         const existing = await this.prisma.task.findFirst({
@@ -135,7 +155,7 @@ let TasksService = class TasksService {
             throw new common_1.NotFoundException('Task not found');
         }
         const nextStatus = dto.status ?? existing.status;
-        return this.prisma.task.update({
+        const updatedTask = await this.prisma.task.update({
             where: { id: taskId },
             data: {
                 ...dto,
@@ -151,6 +171,34 @@ let TasksService = class TasksService {
                     : undefined,
             },
         });
+        const statusChanged = existing.status !== updatedTask.status;
+        await this.eventsService.track(userId, client_1.UserEventType.TASK_UPDATED, {
+            entityId: updatedTask.id,
+            payload: {
+                fromStatus: existing.status,
+                toStatus: updatedTask.status,
+                priority: updatedTask.priority,
+            },
+        });
+        if (statusChanged) {
+            await this.eventsService.track(userId, client_1.UserEventType.TASK_STATUS_CHANGED, {
+                entityId: updatedTask.id,
+                payload: {
+                    fromStatus: existing.status,
+                    toStatus: updatedTask.status,
+                },
+            });
+        }
+        if (existing.status !== client_1.TaskStatus.DONE &&
+            updatedTask.status === client_1.TaskStatus.DONE) {
+            await this.eventsService.track(userId, client_1.UserEventType.TASK_COMPLETED, {
+                entityId: updatedTask.id,
+                payload: {
+                    source: 'update',
+                },
+            });
+        }
+        return updatedTask;
     }
     async remove(userId, taskId) {
         const existing = await this.prisma.task.findFirst({
@@ -160,6 +208,12 @@ let TasksService = class TasksService {
             throw new common_1.NotFoundException('Task not found');
         }
         await this.prisma.task.delete({ where: { id: taskId } });
+        await this.eventsService.track(userId, client_1.UserEventType.TASK_DELETED, {
+            entityId: taskId,
+            payload: {
+                previousStatus: existing.status,
+            },
+        });
         return { success: true };
     }
     async duplicate(userId, taskId) {
@@ -169,7 +223,7 @@ let TasksService = class TasksService {
         if (!existing) {
             throw new common_1.NotFoundException('Task not found');
         }
-        return this.prisma.task.create({
+        const duplicated = await this.prisma.task.create({
             data: {
                 userId,
                 title: `${existing.title} (копия)`,
@@ -181,6 +235,14 @@ let TasksService = class TasksService {
                 subtasks: [],
             },
         });
+        await this.eventsService.track(userId, client_1.UserEventType.TASK_CREATED, {
+            entityId: duplicated.id,
+            payload: {
+                source: 'duplicate',
+                fromTaskId: existing.id,
+            },
+        });
+        return duplicated;
     }
     async findUpcoming(userId, days = 7) {
         const now = new Date();
@@ -211,6 +273,10 @@ let TasksService = class TasksService {
             await this.prisma.task.deleteMany({
                 where: { id: { in: ownedIds } },
             });
+            await Promise.all(ownedIds.map((id) => this.eventsService.track(userId, client_1.UserEventType.TASK_DELETED, {
+                entityId: id,
+                payload: { source: 'bulk' },
+            })));
             return { affected: ownedIds.length, action: 'deleted' };
         }
         if (dto.status) {
@@ -222,6 +288,16 @@ let TasksService = class TasksService {
                     completedAt: dto.status === client_1.TaskStatus.DONE ? now : null,
                 },
             });
+            if (dto.status === client_1.TaskStatus.DONE) {
+                await Promise.all(ownedIds.map((id) => this.eventsService.track(userId, client_1.UserEventType.TASK_COMPLETED, {
+                    entityId: id,
+                    payload: { source: 'bulk' },
+                })));
+            }
+            await Promise.all(ownedIds.map((id) => this.eventsService.track(userId, client_1.UserEventType.TASK_STATUS_CHANGED, {
+                entityId: id,
+                payload: { source: 'bulk', toStatus: dto.status },
+            })));
             return {
                 affected: ownedIds.length,
                 action: 'status_updated',
@@ -234,6 +310,7 @@ let TasksService = class TasksService {
 exports.TasksService = TasksService;
 exports.TasksService = TasksService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        events_service_1.EventsService])
 ], TasksService);
 //# sourceMappingURL=tasks.service.js.map

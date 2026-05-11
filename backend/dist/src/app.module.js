@@ -25,6 +25,7 @@ const notes_module_1 = require("./notes/notes.module");
 const goals_module_1 = require("./goals/goals.module");
 const focus_sessions_module_1 = require("./focus-sessions/focus-sessions.module");
 const logger_middleware_1 = require("./common/middleware/logger.middleware");
+const events_module_1 = require("./events/events.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logger_middleware_1.LoggerMiddleware).forRoutes('*');
@@ -47,6 +48,7 @@ exports.AppModule = AppModule = __decorate([
             notes_module_1.NotesModule,
             goals_module_1.GoalsModule,
             focus_sessions_module_1.FocusSessionsModule,
+            events_module_1.EventsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [
