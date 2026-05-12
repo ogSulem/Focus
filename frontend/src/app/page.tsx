@@ -25,6 +25,9 @@ import { OnboardingModal } from '@/components/onboarding-modal';
 import { DeadlineNotifier } from '@/components/deadline-notifier';
 import { IntelligenceStoryCard } from '@/components/intelligence-story-card';
 import { ExperimentReportCard } from '@/components/experiment-report-card';
+import { BurnoutRiskCard } from '@/components/burnout-risk-card';
+import { ArchetypeCard } from '@/components/archetype-card';
+import { VelocityForecastCard } from '@/components/velocity-forecast-card';
 
 export default async function Home() {
   // Read access token from the secure httpOnly cookie set by /api/auth/set
@@ -366,6 +369,15 @@ export default async function Home() {
         {/* ── Experiment Report ── */}
         <ExperimentReportCard report={data.experimentReport} />
 
+        {/* ── Burnout Risk Index ── */}
+        <BurnoutRiskCard burnout={data.burnout} />
+
+        {/* ── Productivity Archetype ── */}
+        <ArchetypeCard archetype={data.archetype} />
+
+        {/* ── Velocity Forecast ── */}
+        <VelocityForecastCard forecast={data.velocityForecast} />
+
         {/* ── Achievements & Gamification ── */}
         <section id="ai-section" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr)', gap: 14, marginBottom: 14 }}>
           <AchievementsCard />
@@ -422,7 +434,7 @@ export default async function Home() {
 
         {/* ── Footer ── */}
         <footer style={{ textAlign: 'center', padding: '12px 0 4px', color: 'var(--text-tertiary)', fontSize: '0.72rem' }}>
-          NeuroTrack · AI Productivity System · v8.0
+          NeuroTrack · AI Productivity System · v9.0
           <span style={{ marginLeft: 12 }}>
             <kbd style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: 'var(--border)', borderRadius: 4, padding: '1px 5px', color: 'var(--text-tertiary)' }}>⌘K</kbd> поиск ·&nbsp;
             <kbd style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: 'var(--border)', borderRadius: 4, padding: '1px 5px', color: 'var(--text-tertiary)' }}>N</kbd> задача ·&nbsp;

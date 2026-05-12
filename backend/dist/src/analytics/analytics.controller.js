@@ -50,6 +50,15 @@ let AnalyticsController = class AnalyticsController {
     getHeatmap(user) {
         return this.analyticsService.getHeatmap(user.sub);
     }
+    getBurnoutIndex(user) {
+        return this.analyticsService.getBurnoutIndex(user.sub);
+    }
+    getArchetype(user) {
+        return this.analyticsService.getProductivityArchetype(user.sub);
+    }
+    getVelocityForecast(user) {
+        return this.analyticsService.getVelocityForecast(user.sub);
+    }
 };
 exports.AnalyticsController = AnalyticsController;
 __decorate([
@@ -138,6 +147,36 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getHeatmap", null);
+__decorate([
+    (0, common_1.Get)('burnout-index'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Cognitive load / burnout detection index (0–100) with factors and suggestions',
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getBurnoutIndex", null);
+__decorate([
+    (0, common_1.Get)('archetype'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Classify user productivity archetype based on historical task and habit patterns',
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getArchetype", null);
+__decorate([
+    (0, common_1.Get)('velocity-forecast'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'OLS linear regression velocity forecast: predicted completed tasks for next week + confidence interval',
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getVelocityForecast", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, swagger_1.ApiTags)('analytics'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

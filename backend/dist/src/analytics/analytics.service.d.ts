@@ -100,6 +100,9 @@ export declare class AnalyticsService {
     private buildTaskRiskForecast;
     private buildHabitForecast;
     private extractActivityBuckets;
+    getBurnoutIndex(userId: string): Promise<BurnoutIndexPayload>;
+    getProductivityArchetype(userId: string): Promise<ArchetypePayload>;
+    getVelocityForecast(userId: string): Promise<VelocityForecastPayload>;
 }
 export interface TrendsPayload {
     completedTasks: {
@@ -142,4 +145,41 @@ export interface OverviewPayload {
     };
     weekByDay: WeekDayPoint[];
     productivityScore: number;
+}
+export interface BurnoutIndexPayload {
+    burnoutIndex: number;
+    level: 'low' | 'medium' | 'high' | 'critical';
+    factors: string[];
+    suggestions: string[];
+    modelFormula: string;
+}
+export type ArchetypeType = 'MORNING_PEAK' | 'DEADLINE_DRIVEN' | 'DEEP_WORK_FOCUSED' | 'HABIT_BUILDER' | 'BALANCED' | 'UNKNOWN';
+export interface ArchetypePayload {
+    archetype: ArchetypeType;
+    label: string;
+    description: string;
+    confidence: number;
+    traits: string[];
+    rawScores?: {
+        morningPeak: number;
+        deadlineDriven: number;
+        deepWork: number;
+        habitBuilder: number;
+    };
+    peakWindow?: string;
+}
+export interface VelocityForecastPayload {
+    historicalWeeks: {
+        weekLabel: string;
+        completed: number;
+    }[];
+    forecast: number;
+    confidenceInterval: {
+        low: number;
+        high: number;
+    };
+    trend: 'growing' | 'declining' | 'stable';
+    trendSlope: number;
+    rSquared: number;
+    modelFormula: string;
 }

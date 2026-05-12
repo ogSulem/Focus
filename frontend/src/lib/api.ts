@@ -103,6 +103,47 @@ export interface ExperimentReport {
   delta: ExperimentMetrics;
 }
 
+export interface BurnoutIndexPayload {
+  burnoutIndex: number; // 0–100, higher = more burnout risk
+  level: 'low' | 'medium' | 'high' | 'critical';
+  factors: string[];
+  suggestions: string[];
+  modelFormula: string;
+}
+
+export type ArchetypeType =
+  | 'MORNING_PEAK'
+  | 'DEADLINE_DRIVEN'
+  | 'DEEP_WORK_FOCUSED'
+  | 'HABIT_BUILDER'
+  | 'BALANCED'
+  | 'UNKNOWN';
+
+export interface ArchetypePayload {
+  archetype: ArchetypeType;
+  label: string;
+  description: string;
+  confidence: number; // 0–100
+  traits: string[];
+  rawScores?: {
+    morningPeak: number;
+    deadlineDriven: number;
+    deepWork: number;
+    habitBuilder: number;
+  };
+  peakWindow?: string;
+}
+
+export interface VelocityForecastPayload {
+  historicalWeeks: { weekLabel: string; completed: number }[];
+  forecast: number;
+  confidenceInterval: { low: number; high: number };
+  trend: 'growing' | 'declining' | 'stable';
+  trendSlope: number;
+  rSquared: number;
+  modelFormula: string;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -119,6 +160,9 @@ export interface DashboardData {
   recommendations: RecommendationPayload;
   intelligence: IntelligencePayload;
   experimentReport: ExperimentReport;
+  burnout: BurnoutIndexPayload;
+  archetype: ArchetypePayload;
+  velocityForecast: VelocityForecastPayload;
   user?: UserProfile;
 }
 
@@ -341,6 +385,48 @@ const DEMO_DATA: DashboardData = {
       focusMinutes: 180,
     },
   },
+  burnout: {
+    burnoutIndex: 38,
+    level: 'medium',
+    factors: [
+      '4 просроченных задачи в работе',
+      'LOW темп завершений за последние 7 дней',
+    ],
+    suggestions: [
+      'Переведите часть просроченных задач в архив или перенесите дедлайны',
+      'Начните с одной «быстрой победой» каждое утро',
+    ],
+    modelFormula:
+      'burnoutIndex = 0.30·overduePressure + 0.25·backlogDensity + 0.20·habitGap - 0.15·focusConsistency - 0.10·completionMomentum',
+  },
+  archetype: {
+    archetype: 'MORNING_PEAK',
+    label: 'Утренний пик',
+    description:
+      'Максимальная продуктивность в ранние часы. Стратегические задачи лучше решаются до полудня.',
+    confidence: 74,
+    traits: ['Активен 5–12 ч', 'Быстрый старт рабочего дня', 'Энергия падает к вечеру'],
+    rawScores: { morningPeak: 74, deadlineDriven: 31, deepWork: 55, habitBuilder: 48 },
+    peakWindow: '05:00–12:00',
+  },
+  velocityForecast: {
+    historicalWeeks: [
+      { weekLabel: '2026-03-17', completed: 8 },
+      { weekLabel: '2026-03-24', completed: 11 },
+      { weekLabel: '2026-03-31', completed: 9 },
+      { weekLabel: '2026-04-07', completed: 13 },
+      { weekLabel: '2026-04-14', completed: 14 },
+      { weekLabel: '2026-04-21', completed: 16 },
+      { weekLabel: '2026-04-28', completed: 15 },
+      { weekLabel: '2026-05-05', completed: 18 },
+    ],
+    forecast: 20,
+    confidenceInterval: { low: 16, high: 24 },
+    trend: 'growing',
+    trendSlope: 1.3,
+    rSquared: 0.87,
+    modelFormula: 'ŷ = 7.5 + 1.3·x  (OLS, R²=0.87)',
+  },
 };
 
 export async function getDashboardData(token?: string): Promise<DashboardData> {
@@ -349,15 +435,18 @@ export async function getDashboardData(token?: string): Promise<DashboardData> {
   }
 
   try {
-    const [tasks, habits, weekly, recommendations, intelligence, experimentReport, user] =
+    const [tasks, habits, weekly, recommendations, intelligence, experimentReport, burnout, archetype, velocityForecast, user] =
       await Promise.all([
-      apiFetch<Task[]>('/tasks', token),
-      apiFetch<Habit[]>('/habits', token),
-      apiFetch<ProductivityPoint[]>('/analytics/weekly', token),
-      apiFetch<RecommendationPayload>('/analytics/recommendations', token),
-      apiFetch<IntelligencePayload>('/analytics/intelligence?energy=medium', token),
-      apiFetch<ExperimentReport>('/analytics/experiment-report', token),
-      apiFetch<UserProfile>('/users/me', token).catch(() => null),
+        apiFetch<Task[]>('/tasks', token),
+        apiFetch<Habit[]>('/habits', token),
+        apiFetch<ProductivityPoint[]>('/analytics/weekly', token),
+        apiFetch<RecommendationPayload>('/analytics/recommendations', token),
+        apiFetch<IntelligencePayload>('/analytics/intelligence?energy=medium', token),
+        apiFetch<ExperimentReport>('/analytics/experiment-report', token),
+        apiFetch<BurnoutIndexPayload>('/analytics/burnout-index', token),
+        apiFetch<ArchetypePayload>('/analytics/archetype', token),
+        apiFetch<VelocityForecastPayload>('/analytics/velocity-forecast', token),
+        apiFetch<UserProfile>('/users/me', token).catch(() => null),
       ]);
 
     return {
@@ -373,6 +462,9 @@ export async function getDashboardData(token?: string): Promise<DashboardData> {
       recommendations,
       intelligence,
       experimentReport,
+      burnout,
+      archetype,
+      velocityForecast,
       user: user ?? undefined,
     };
   } catch {

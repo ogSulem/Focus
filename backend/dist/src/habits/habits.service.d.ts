@@ -7,51 +7,11 @@ export declare class HabitsService {
     private readonly prisma;
     private readonly eventsService;
     constructor(prisma: PrismaService, eventsService: EventsService);
-    findAll(userId: string): import("@prisma/client").Prisma.PrismaPromise<{
-        name: string;
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
-        streak: number;
-        completedDays: import("@prisma/client/runtime/library").JsonValue;
-    }[]>;
-    create(userId: string, dto: CreateHabitDto): Promise<{
-        name: string;
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
-        streak: number;
-        completedDays: import("@prisma/client/runtime/library").JsonValue;
-    }>;
-    update(userId: string, habitId: string, dto: UpdateHabitDto): Promise<{
-        name: string;
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
-        streak: number;
-        completedDays: import("@prisma/client/runtime/library").JsonValue;
-    }>;
-    track(userId: string, habitId: string, dto: TrackHabitDto): Promise<{
-        name: string;
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
-        streak: number;
-        completedDays: import("@prisma/client/runtime/library").JsonValue;
-    }>;
-    untrack(userId: string, habitId: string, dto: TrackHabitDto): Promise<{
-        name: string;
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
-        streak: number;
-        completedDays: import("@prisma/client/runtime/library").JsonValue;
-    }>;
+    findAll(userId: string): any;
+    create(userId: string, dto: CreateHabitDto): Promise<any>;
+    update(userId: string, habitId: string, dto: UpdateHabitDto): Promise<any>;
+    track(userId: string, habitId: string, dto: TrackHabitDto): Promise<any>;
+    untrack(userId: string, habitId: string, dto: TrackHabitDto): Promise<any>;
     getStats(userId: string): Promise<HabitStats[]>;
     remove(userId: string, habitId: string): Promise<{
         success: boolean;

@@ -100,14 +100,15 @@ export class AnalyticsController {
   getHeatmap(@CurrentUser() user: JwtPayload): Promise<HeatmapDay[]> {
     return this.analyticsService.getHeatmap(user.sub);
   }
-}
 
   @Get('burnout-index')
   @ApiOperation({
     summary:
       'Cognitive load / burnout detection index (0–100) with factors and suggestions',
   })
-  getBurnoutIndex(@CurrentUser() user: JwtPayload): Promise<BurnoutIndexPayload> {
+  getBurnoutIndex(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<BurnoutIndexPayload> {
     return this.analyticsService.getBurnoutIndex(user.sub);
   }
 
@@ -125,7 +126,9 @@ export class AnalyticsController {
     summary:
       'OLS linear regression velocity forecast: predicted completed tasks for next week + confidence interval',
   })
-  getVelocityForecast(@CurrentUser() user: JwtPayload): Promise<VelocityForecastPayload> {
+  getVelocityForecast(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<VelocityForecastPayload> {
     return this.analyticsService.getVelocityForecast(user.sub);
   }
 }

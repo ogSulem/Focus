@@ -664,6 +664,276 @@ let AnalyticsService = class AnalyticsService {
         });
         return buckets;
     }
+    async getBurnoutIndex(userId) {
+        const now = new Date();
+        const sevenDaysAgo = new Date(now);
+        sevenDaysAgo.setDate(now.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+        const [allOpenTasks, recentlyCompleted, habits, sessions] = await Promise.all([
+            this.prisma.task.findMany({
+                where: { userId, status: { not: client_1.TaskStatus.DONE } },
+                select: { deadline: true, createdAt: true, priority: true },
+            }),
+            this.prisma.task.count({
+                where: {
+                    userId,
+                    status: client_1.TaskStatus.DONE,
+                    completedAt: { gte: sevenDaysAgo },
+                },
+            }),
+            this.prisma.habit.findMany({
+                where: { userId },
+                select: { completedDays: true, streak: true },
+            }),
+            this.prisma.focusSession.findMany({
+                where: { userId, phase: 'focus', completedAt: { gte: sevenDaysAgo } },
+                select: { durationMin: true, completedAt: true },
+            }),
+        ]);
+        const factors = [];
+        const suggestions = [];
+        const overdueTasks = allOpenTasks.filter((t) => t.deadline && t.deadline < now);
+        const overdueHigh = overdueTasks.filter((t) => t.priority === 'HIGH').length;
+        const overduePressure = allOpenTasks.length > 0
+            ? Math.min(overdueTasks.length / Math.max(allOpenTasks.length, 1), 1)
+            : 0;
+        if (overduePressure > 0.4) {
+            factors.push(`${overdueTasks.length} просроченных задач в работе`);
+            suggestions.push('Переведите часть просроченных задач в архив или перенесите дедлайны');
+        }
+        if (overdueHigh > 0) {
+            factors.push(`${overdueHigh} HIGH-priority задач просрочены`);
+            suggestions.push('Сфокусируйтесь на блокерах с высоким приоритетом');
+        }
+        const oldTasks = allOpenTasks.filter((t) => (now.getTime() - t.createdAt.getTime()) / 86_400_000 > 14);
+        const backlogDensity = allOpenTasks.length > 0
+            ? Math.min(oldTasks.length / Math.max(allOpenTasks.length, 1), 1)
+            : 0;
+        if (backlogDensity > 0.3) {
+            factors.push(`${oldTasks.length} задач не двигались более 2 недель`);
+            suggestions.push('Проведите ревью бэклога: удалите/отложите неактуальное');
+        }
+        const threeDaysAgo = new Date(now);
+        threeDaysAgo.setDate(now.getDate() - 3);
+        const last3 = Array.from({ length: 3 }, (_, i) => {
+            const d = new Date(now);
+            d.setDate(now.getDate() - i);
+            return d.toISOString().slice(0, 10);
+        });
+        let brokenHabits = 0;
+        habits.forEach((habit) => {
+            const days = Array.isArray(habit.completedDays)
+                ? habit.completedDays.filter((d) => typeof d === 'string')
+                : [];
+            const doneInLast3 = days.some((d) => last3.includes(d));
+            if (!doneInLast3)
+                brokenHabits += 1;
+        });
+        const habitGap = habits.length > 0 ? brokenHabits / habits.length : 0;
+        if (habitGap > 0.5) {
+            factors.push(`${brokenHabits} из ${habits.length} привычек не выполнены 3+ дня`);
+            suggestions.push('Сократите список привычек до 2–3 ключевых для восстановления ритма');
+        }
+        const focusDays = new Set(sessions.map((session) => session.completedAt.toISOString().slice(0, 10)));
+        const focusConsistency = Math.min(focusDays.size / 7, 1);
+        if (focusConsistency < 0.3) {
+            factors.push('Менее 2 фокус-сессий за последнюю неделю');
+            suggestions.push('Запланируйте хотя бы 1 pomodoro-блок в день');
+        }
+        const completionMomentum = Math.min(recentlyCompleted / Math.max(7, 1), 1);
+        if (completionMomentum < 0.3) {
+            factors.push('Низкий темп завершений за последние 7 дней');
+            suggestions.push('Начните с одной «быстрой победой» каждое утро');
+        }
+        const raw = overduePressure * 0.30 +
+            backlogDensity * 0.25 +
+            habitGap * 0.20 -
+            focusConsistency * 0.15 -
+            completionMomentum * 0.10;
+        const burnoutIndex = Math.max(0, Math.min(100, Math.round(raw * 100)));
+        let level;
+        if (burnoutIndex >= 70)
+            level = 'critical';
+        else if (burnoutIndex >= 50)
+            level = 'high';
+        else if (burnoutIndex >= 30)
+            level = 'medium';
+        else
+            level = 'low';
+        return {
+            burnoutIndex,
+            level,
+            factors: factors.slice(0, 5),
+            suggestions: suggestions.slice(0, 4),
+            modelFormula: 'burnoutIndex = 0.30·overduePressure + 0.25·backlogDensity + 0.20·habitGap - 0.15·focusConsistency - 0.10·completionMomentum',
+        };
+    }
+    async getProductivityArchetype(userId) {
+        const [tasks, habits, sessions] = await Promise.all([
+            this.prisma.task.findMany({
+                where: { userId, status: client_1.TaskStatus.DONE, completedAt: { not: null } },
+                select: { completedAt: true, deadline: true, createdAt: true },
+                take: 300,
+                orderBy: { completedAt: 'desc' },
+            }),
+            this.prisma.habit.findMany({
+                where: { userId },
+                select: { streak: true, completedDays: true },
+            }),
+            this.prisma.focusSession.findMany({
+                where: { userId, phase: 'focus' },
+                select: { durationMin: true, completedAt: true },
+                take: 200,
+                orderBy: { completedAt: 'desc' },
+            }),
+        ]);
+        if (tasks.length < 5) {
+            return {
+                archetype: 'UNKNOWN',
+                label: 'Профиль формируется',
+                description: 'Нужно больше данных. Выполните 10+ задач, чтобы система определила ваш паттерн.',
+                confidence: 0,
+                traits: [],
+            };
+        }
+        const hourCounts = Array(24).fill(0);
+        tasks.forEach((t) => {
+            if (t.completedAt)
+                hourCounts[t.completedAt.getHours()] += 1;
+        });
+        const morningCount = hourCounts.slice(5, 12).reduce((a, b) => a + b, 0);
+        const afternoonCount = hourCounts.slice(12, 18).reduce((a, b) => a + b, 0);
+        const eveningCount = hourCounts.slice(18, 24).reduce((a, b) => a + b, 0);
+        const morningRatio = morningCount / Math.max(tasks.length, 1);
+        const deadlineDrivenCount = tasks.filter((t) => {
+            if (!t.deadline || !t.completedAt)
+                return false;
+            const diff = (t.completedAt.getTime() - t.deadline.getTime()) / 86_400_000;
+            return diff >= -1 && diff <= 0;
+        }).length;
+        const deadlineDrivenRatio = deadlineDrivenCount / Math.max(tasks.length, 1);
+        const avgFocus = sessions.length > 0
+            ? sessions.reduce((a, s) => a + s.durationMin, 0) / sessions.length
+            : 0;
+        const avgStreak = habits.length > 0
+            ? habits.reduce((a, h) => a + h.streak, 0) / habits.length
+            : 0;
+        const scores = {
+            MORNING_PEAK: morningRatio,
+            DEADLINE_DRIVEN: deadlineDrivenRatio,
+            DEEP_WORK_FOCUSED: Math.min(avgFocus / 60, 1),
+            HABIT_BUILDER: Math.min(avgStreak / 21, 1),
+            BALANCED: Math.min(((morningRatio + (1 - deadlineDrivenRatio) + Math.min(avgFocus / 45, 1) + Math.min(avgStreak / 14, 1)) / 4), 1),
+        };
+        const best = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+        const archetypeKey = best[0];
+        const confidence = Math.round(best[1] * 100);
+        const META = {
+            MORNING_PEAK: {
+                label: 'Утренний пик',
+                description: 'Максимальная продуктивность в ранние часы. Стратегические задачи лучше решаются до полудня.',
+                traits: ['Активен 5–12 ч', 'Быстрый старт рабочего дня', 'Энергия падает к вечеру'],
+            },
+            DEADLINE_DRIVEN: {
+                label: 'Deadline-ориентированный',
+                description: 'Включается при приближении дедлайна. Высокая интенсивность в финальной фазе задачи.',
+                traits: ['Пиковый фокус перед сроком', 'Откладывает начало', 'Точно укладывается в сроки'],
+            },
+            DEEP_WORK_FOCUSED: {
+                label: 'Deep Work мастер',
+                description: 'Предпочитает длинные непрерывные сессии. Высокая результативность в сложных задачах.',
+                traits: [
+                    `Avg фокус ${Math.round(avgFocus)} мин`,
+                    'Минимум переключений',
+                    'Сложные задачи > поверхностные',
+                ],
+            },
+            HABIT_BUILDER: {
+                label: 'Habit-строитель',
+                description: 'Устойчивые привычки формируют продуктивность. Система и ритуалы важнее спринтов.',
+                traits: [
+                    `Avg streak ${Math.round(avgStreak)} дней`,
+                    'Стабильный темп',
+                    'Долгосрочная дисциплина',
+                ],
+            },
+            BALANCED: {
+                label: 'Сбалансированный',
+                description: 'Равномерное распределение усилий между временными окнами и типами задач.',
+                traits: ['Стабильный темп', 'Равные паттерны активности', 'Устойчив к хаосу'],
+            },
+        };
+        const meta = META[archetypeKey] ?? META['BALANCED'];
+        return {
+            archetype: archetypeKey,
+            label: meta.label,
+            description: meta.description,
+            confidence,
+            traits: meta.traits,
+            rawScores: {
+                morningPeak: round1(morningRatio * 100),
+                deadlineDriven: round1(deadlineDrivenRatio * 100),
+                deepWork: round1(Math.min(avgFocus / 60, 1) * 100),
+                habitBuilder: round1(Math.min(avgStreak / 21, 1) * 100),
+            },
+            peakWindow: morningCount > afternoonCount && morningCount > eveningCount
+                ? '05:00–12:00'
+                : afternoonCount > eveningCount
+                    ? '12:00–18:00'
+                    : '18:00–24:00',
+        };
+    }
+    async getVelocityForecast(userId) {
+        const WEEKS = 8;
+        const now = new Date();
+        now.setHours(23, 59, 59, 999);
+        const weekPoints = [];
+        for (let w = WEEKS - 1; w >= 0; w--) {
+            const start = new Date(now);
+            start.setDate(now.getDate() - (w + 1) * 7 + 1);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(now);
+            end.setDate(now.getDate() - w * 7);
+            end.setHours(23, 59, 59, 999);
+            const count = await this.prisma.task.count({
+                where: {
+                    userId,
+                    status: client_1.TaskStatus.DONE,
+                    completedAt: { gte: start, lte: end },
+                },
+            });
+            const weekStart = start.toISOString().slice(0, 10);
+            weekPoints.push({ weekLabel: weekStart, completed: count });
+        }
+        const n = weekPoints.length;
+        const xs = weekPoints.map((_, i) => i);
+        const ys = weekPoints.map((p) => p.completed);
+        const xMean = xs.reduce((a, b) => a + b, 0) / n;
+        const yMean = ys.reduce((a, b) => a + b, 0) / n;
+        const ssXX = xs.reduce((acc, x) => acc + (x - xMean) ** 2, 0);
+        const ssXY = xs.reduce((acc, x, i) => acc + (x - xMean) * (ys[i] - yMean), 0);
+        const beta1 = ssXX > 0 ? ssXY / ssXX : 0;
+        const beta0 = yMean - beta1 * xMean;
+        const xNext = n;
+        const forecast = Math.max(0, Math.round(beta0 + beta1 * xNext));
+        const residuals = ys.map((y, i) => y - (beta0 + beta1 * xs[i]));
+        const sse = residuals.reduce((acc, r) => acc + r ** 2, 0);
+        const se = n > 2 ? Math.sqrt(sse / (n - 2)) : 0;
+        const margin = Math.round(1.28 * se * Math.sqrt(1 + 1 / n));
+        const trend = beta1 > 0.2 ? 'growing' : beta1 < -0.2 ? 'declining' : 'stable';
+        return {
+            historicalWeeks: weekPoints,
+            forecast,
+            confidenceInterval: {
+                low: Math.max(0, forecast - margin),
+                high: forecast + margin,
+            },
+            trend,
+            trendSlope: round1(beta1),
+            rSquared: ssXX > 0 ? round1(1 - sse / (ys.reduce((acc, y) => acc + (y - yMean) ** 2, 0) || 1)) : 0,
+            modelFormula: `ŷ = ${round1(beta0)} + ${round1(beta1)}·x  (OLS, R²=${round1(ssXX > 0 ? 1 - sse / (ys.reduce((acc, y) => acc + (y - yMean) ** 2, 0) || 1) : 0)})`,
+        };
+    }
 };
 exports.AnalyticsService = AnalyticsService;
 exports.AnalyticsService = AnalyticsService = __decorate([
@@ -671,4 +941,7 @@ exports.AnalyticsService = AnalyticsService = __decorate([
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         events_service_1.EventsService])
 ], AnalyticsService);
+function round1(value) {
+    return Math.round(value * 10) / 10;
+}
 //# sourceMappingURL=analytics.service.js.map

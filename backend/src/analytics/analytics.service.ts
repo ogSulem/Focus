@@ -975,27 +975,28 @@ export class AnalyticsService {
     sevenDaysAgo.setDate(now.getDate() - 7);
     sevenDaysAgo.setHours(0, 0, 0, 0);
 
-    const [allOpenTasks, recentlyCompleted, habits, sessions] = await Promise.all([
-      this.prisma.task.findMany({
-        where: { userId, status: { not: TaskStatus.DONE } },
-        select: { deadline: true, createdAt: true, priority: true },
-      }),
-      this.prisma.task.count({
-        where: {
-          userId,
-          status: TaskStatus.DONE,
-          completedAt: { gte: sevenDaysAgo },
-        },
-      }),
-      this.prisma.habit.findMany({
-        where: { userId },
-        select: { completedDays: true, streak: true },
-      }),
-      this.prisma.focusSession.findMany({
-        where: { userId, phase: 'focus', completedAt: { gte: sevenDaysAgo } },
-        select: { durationMin: true, completedAt: true },
-      }),
-    ]);
+    const [allOpenTasks, recentlyCompleted, habits, sessions] =
+      await Promise.all([
+        this.prisma.task.findMany({
+          where: { userId, status: { not: TaskStatus.DONE } },
+          select: { deadline: true, createdAt: true, priority: true },
+        }),
+        this.prisma.task.count({
+          where: {
+            userId,
+            status: TaskStatus.DONE,
+            completedAt: { gte: sevenDaysAgo },
+          },
+        }),
+        this.prisma.habit.findMany({
+          where: { userId },
+          select: { completedDays: true, streak: true },
+        }),
+        this.prisma.focusSession.findMany({
+          where: { userId, phase: 'focus', completedAt: { gte: sevenDaysAgo } },
+          select: { durationMin: true, completedAt: true },
+        }),
+      ]);
 
     const factors: string[] = [];
     const suggestions: string[] = [];
@@ -1004,13 +1005,18 @@ export class AnalyticsService {
     const overdueTasks = allOpenTasks.filter(
       (t) => t.deadline && t.deadline < now,
     );
-    const overdueHigh = overdueTasks.filter((t) => t.priority === 'HIGH').length;
-    const overduePressure = allOpenTasks.length > 0
-      ? Math.min(overdueTasks.length / Math.max(allOpenTasks.length, 1), 1)
-      : 0;
+    const overdueHigh = overdueTasks.filter(
+      (t) => t.priority === 'HIGH',
+    ).length;
+    const overduePressure =
+      allOpenTasks.length > 0
+        ? Math.min(overdueTasks.length / Math.max(allOpenTasks.length, 1), 1)
+        : 0;
     if (overduePressure > 0.4) {
       factors.push(`${overdueTasks.length} просроченных задач в работе`);
-      suggestions.push('Переведите часть просроченных задач в архив или перенесите дедлайны');
+      suggestions.push(
+        'Переведите часть просроченных задач в архив или перенесите дедлайны',
+      );
     }
     if (overdueHigh > 0) {
       factors.push(`${overdueHigh} HIGH-priority задач просрочены`);
@@ -1021,12 +1027,15 @@ export class AnalyticsService {
     const oldTasks = allOpenTasks.filter(
       (t) => (now.getTime() - t.createdAt.getTime()) / 86_400_000 > 14,
     );
-    const backlogDensity = allOpenTasks.length > 0
-      ? Math.min(oldTasks.length / Math.max(allOpenTasks.length, 1), 1)
-      : 0;
+    const backlogDensity =
+      allOpenTasks.length > 0
+        ? Math.min(oldTasks.length / Math.max(allOpenTasks.length, 1), 1)
+        : 0;
     if (backlogDensity > 0.3) {
       factors.push(`${oldTasks.length} задач не двигались более 2 недель`);
-      suggestions.push('Проведите ревью бэклога: удалите/отложите неактуальное');
+      suggestions.push(
+        'Проведите ревью бэклога: удалите/отложите неактуальное',
+      );
     }
 
     // 3. Habit consistency gap (0–1): fraction of active habits not done in last 3 days
@@ -1047,11 +1056,14 @@ export class AnalyticsService {
       const doneInLast3 = days.some((d) => last3.includes(d));
       if (!doneInLast3) brokenHabits += 1;
     });
-    const habitGap =
-      habits.length > 0 ? brokenHabits / habits.length : 0;
+    const habitGap = habits.length > 0 ? brokenHabits / habits.length : 0;
     if (habitGap > 0.5) {
-      factors.push(`${brokenHabits} из ${habits.length} привычек не выполнены 3+ дня`);
-      suggestions.push('Сократите список привычек до 2–3 ключевых для восстановления ритма');
+      factors.push(
+        `${brokenHabits} из ${habits.length} привычек не выполнены 3+ дня`,
+      );
+      suggestions.push(
+        'Сократите список привычек до 2–3 ключевых для восстановления ритма',
+      );
     }
 
     // 4. Focus consistency (0–1 inverse): days with at least one focus session in last 7
@@ -1074,11 +1086,11 @@ export class AnalyticsService {
     // Composite burnout index [0, 100]
     // Higher = more burnout risk
     const raw =
-      overduePressure * 0.30 +
+      overduePressure * 0.3 +
       backlogDensity * 0.25 +
-      habitGap * 0.20 -
+      habitGap * 0.2 -
       focusConsistency * 0.15 -
-      completionMomentum * 0.10;
+      completionMomentum * 0.1;
     const burnoutIndex = Math.max(0, Math.min(100, Math.round(raw * 100)));
 
     let level: BurnoutIndexPayload['level'];
@@ -1146,7 +1158,8 @@ export class AnalyticsService {
     // Deadline-driven: completed within 24h of deadline
     const deadlineDrivenCount = tasks.filter((t) => {
       if (!t.deadline || !t.completedAt) return false;
-      const diff = (t.completedAt.getTime() - t.deadline.getTime()) / 86_400_000;
+      const diff =
+        (t.completedAt.getTime() - t.deadline.getTime()) / 86_400_000;
       return diff >= -1 && diff <= 0;
     }).length;
     const deadlineDrivenRatio = deadlineDrivenCount / Math.max(tasks.length, 1);
@@ -1168,11 +1181,14 @@ export class AnalyticsService {
       DEADLINE_DRIVEN: deadlineDrivenRatio,
       DEEP_WORK_FOCUSED: Math.min(avgFocus / 60, 1),
       HABIT_BUILDER: Math.min(avgStreak / 21, 1),
-      BALANCED:
-        Math.min(
-          ((morningRatio + (1 - deadlineDrivenRatio) + Math.min(avgFocus / 45, 1) + Math.min(avgStreak / 14, 1)) / 4),
-          1,
-        ),
+      BALANCED: Math.min(
+        (morningRatio +
+          (1 - deadlineDrivenRatio) +
+          Math.min(avgFocus / 45, 1) +
+          Math.min(avgStreak / 14, 1)) /
+          4,
+        1,
+      ),
     };
 
     const best = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
@@ -1194,13 +1210,21 @@ export class AnalyticsService {
         label: 'Утренний пик',
         description:
           'Максимальная продуктивность в ранние часы. Стратегические задачи лучше решаются до полудня.',
-        traits: ['Активен 5–12 ч', 'Быстрый старт рабочего дня', 'Энергия падает к вечеру'],
+        traits: [
+          'Активен 5–12 ч',
+          'Быстрый старт рабочего дня',
+          'Энергия падает к вечеру',
+        ],
       },
       DEADLINE_DRIVEN: {
         label: 'Deadline-ориентированный',
         description:
           'Включается при приближении дедлайна. Высокая интенсивность в финальной фазе задачи.',
-        traits: ['Пиковый фокус перед сроком', 'Откладывает начало', 'Точно укладывается в сроки'],
+        traits: [
+          'Пиковый фокус перед сроком',
+          'Откладывает начало',
+          'Точно укладывается в сроки',
+        ],
       },
       DEEP_WORK_FOCUSED: {
         label: 'Deep Work мастер',
@@ -1226,7 +1250,11 @@ export class AnalyticsService {
         label: 'Сбалансированный',
         description:
           'Равномерное распределение усилий между временными окнами и типами задач.',
-        traits: ['Стабильный темп', 'Равные паттерны активности', 'Устойчив к хаосу'],
+        traits: [
+          'Стабильный темп',
+          'Равные паттерны активности',
+          'Устойчив к хаосу',
+        ],
       },
     };
 
@@ -1293,7 +1321,10 @@ export class AnalyticsService {
     const yMean = ys.reduce((a, b) => a + b, 0) / n;
 
     const ssXX = xs.reduce((acc, x) => acc + (x - xMean) ** 2, 0);
-    const ssXY = xs.reduce((acc, x, i) => acc + (x - xMean) * (ys[i] - yMean), 0);
+    const ssXY = xs.reduce(
+      (acc, x, i) => acc + (x - xMean) * (ys[i] - yMean),
+      0,
+    );
 
     const beta1 = ssXX > 0 ? ssXY / ssXX : 0;
     const beta0 = yMean - beta1 * xMean;
@@ -1321,7 +1352,12 @@ export class AnalyticsService {
       },
       trend,
       trendSlope: round1(beta1),
-      rSquared: ssXX > 0 ? round1(1 - sse / (ys.reduce((acc, y) => acc + (y - yMean) ** 2, 0) || 1)) : 0,
+      rSquared:
+        ssXX > 0
+          ? round1(
+              1 - sse / (ys.reduce((acc, y) => acc + (y - yMean) ** 2, 0) || 1),
+            )
+          : 0,
       modelFormula: `ŷ = ${round1(beta0)} + ${round1(beta1)}·x  (OLS, R²=${round1(ssXX > 0 ? 1 - sse / (ys.reduce((acc, y) => acc + (y - yMean) ** 2, 0) || 1) : 0)})`,
     };
   }

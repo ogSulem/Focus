@@ -1,5 +1,5 @@
 import type { JwtPayload } from '../auth/strategies/jwt.strategy';
-import { AnalyticsService, AnalyticsSummary, HeatmapDay, IntelligencePayload, OverviewPayload, ProductivityPoint, RecommendationPayload, TrendsPayload } from './analytics.service';
+import { AnalyticsService, AnalyticsSummary, ArchetypePayload, BurnoutIndexPayload, HeatmapDay, IntelligencePayload, OverviewPayload, ProductivityPoint, RecommendationPayload, TrendsPayload, VelocityForecastPayload } from './analytics.service';
 import { ExperimentReport } from '../events/events.service';
 export declare class AnalyticsController {
     private readonly analyticsService;
@@ -13,4 +13,7 @@ export declare class AnalyticsController {
     getExperimentReport(user: JwtPayload): Promise<ExperimentReport>;
     getTrends(user: JwtPayload): Promise<TrendsPayload>;
     getHeatmap(user: JwtPayload): Promise<HeatmapDay[]>;
+    getBurnoutIndex(user: JwtPayload): Promise<BurnoutIndexPayload>;
+    getArchetype(user: JwtPayload): Promise<ArchetypePayload>;
+    getVelocityForecast(user: JwtPayload): Promise<VelocityForecastPayload>;
 }
