@@ -1757,8 +1757,16 @@ export class AnalyticsService {
 
     const focusVar = variance(xf);
     const habitVar = variance(xh);
-    const betaFocus = focusVar > 0 ? covariance(xf, y) / focusVar : 0;
-    const betaHabit = habitVar > 0 ? covariance(xh, y) / habitVar : 0;
+    // We clamp negative elasticities to 0 for scenario uplift simulation.
+    // Rationale: this feature models "improvement strategies" only.
+    const betaFocus = Math.max(
+      0,
+      focusVar > 0 ? covariance(xf, y) / focusVar : 0,
+    );
+    const betaHabit = Math.max(
+      0,
+      habitVar > 0 ? covariance(xh, y) / habitVar : 0,
+    );
 
     const recentDays = dayKeys.slice(-14);
     const baselineWeekly = Math.max(
@@ -1823,8 +1831,10 @@ export class AnalyticsService {
     );
 
     const bestScenario = scenarios[0];
+    // Minimum observed days needed for medium confidence in 42-day window.
+    const CONFIDENCE_THRESHOLD_DAYS = 35;
     const confidence: ScenarioSimulatorPayload['confidence'] =
-      dayKeys.length >= 35 ? 'medium' : 'low';
+      dayKeys.length >= CONFIDENCE_THRESHOLD_DAYS ? 'medium' : 'low';
 
     return {
       baseline: {
@@ -1838,7 +1848,7 @@ export class AnalyticsService {
       modelFormula:
         'ŷ_day = α + βf·focusMin + βh·habitCompletions;  βf=cov(focus,tasks)/var(focus), βh=cov(habits,tasks)/var(habits)',
       explanation:
-        'Симулятор оценивает эффект поведенческих изменений на недельную продуктивность по персональным данным последних 42 дней.',
+        'Симулятор оценивает эффект поведенческих изменений на недельную продуктивность по персональным данным последних 42 дней. Отрицательные эластичности обнуляются, так как сценарии моделируют только стратегии улучшения.',
     };
   }
 }

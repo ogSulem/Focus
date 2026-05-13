@@ -1241,8 +1241,8 @@ let AnalyticsService = class AnalyticsService {
         };
         const focusVar = variance(xf);
         const habitVar = variance(xh);
-        const betaFocus = focusVar > 0 ? covariance(xf, y) / focusVar : 0;
-        const betaHabit = habitVar > 0 ? covariance(xh, y) / habitVar : 0;
+        const betaFocus = Math.max(0, focusVar > 0 ? covariance(xf, y) / focusVar : 0);
+        const betaHabit = Math.max(0, habitVar > 0 ? covariance(xh, y) / habitVar : 0);
         const recentDays = dayKeys.slice(-14);
         const baselineWeekly = Math.max(0, Math.round(recentDays.reduce((acc, d) => acc + (tasksByDay[d] ?? 0), 0) / 2));
         const scenariosInput = [
@@ -1287,7 +1287,8 @@ let AnalyticsService = class AnalyticsService {
         });
         scenarios.sort((a, b) => b.projectedCompletedTasksWeekly - a.projectedCompletedTasksWeekly);
         const bestScenario = scenarios[0];
-        const confidence = dayKeys.length >= 35 ? 'medium' : 'low';
+        const CONFIDENCE_THRESHOLD_DAYS = 35;
+        const confidence = dayKeys.length >= CONFIDENCE_THRESHOLD_DAYS ? 'medium' : 'low';
         return {
             baseline: {
                 completedTasksWeekly: baselineWeekly,
@@ -1298,7 +1299,7 @@ let AnalyticsService = class AnalyticsService {
             bestScenarioKey: bestScenario?.key ?? null,
             confidence,
             modelFormula: 'ŷ_day = α + βf·focusMin + βh·habitCompletions;  βf=cov(focus,tasks)/var(focus), βh=cov(habits,tasks)/var(habits)',
-            explanation: 'Симулятор оценивает эффект поведенческих изменений на недельную продуктивность по персональным данным последних 42 дней.',
+            explanation: 'Симулятор оценивает эффект поведенческих изменений на недельную продуктивность по персональным данным последних 42 дней. Отрицательные эластичности обнуляются, так как сценарии моделируют только стратегии улучшения.',
         };
     }
 };
