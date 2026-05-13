@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from '@/components/toast';
 import { NotificationPermissionButton } from '@/components/deadline-notifier';
 
@@ -30,25 +30,27 @@ export function SettingsClient({ profile, apiUrl, token }: SettingsClientProps) 
   const [savingPwd, setSavingPwd] = useState(false);
 
   // Appearance state
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [focusDuration, setFocusDuration] = useState(25);
-  const [shortBreak, setShortBreak] = useState(5);
-  const [longBreak, setLongBreak] = useState(15);
-
-  useEffect(() => {
-    // Read saved theme
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light';
     const saved = localStorage.getItem('nt-theme');
     const attr = document.documentElement.getAttribute('data-theme');
-    setTheme((saved ?? attr ?? 'light') as 'light' | 'dark');
-
-    // Read saved focus durations
+    return (saved ?? attr ?? 'light') as 'light' | 'dark';
+  });
+  const [focusDuration, setFocusDuration] = useState(() => {
+    if (typeof window === 'undefined') return 25;
     const fd = parseInt(localStorage.getItem('nt-focus-duration') ?? '25', 10);
+    return Number.isNaN(fd) ? 25 : fd;
+  });
+  const [shortBreak, setShortBreak] = useState(() => {
+    if (typeof window === 'undefined') return 5;
     const sb = parseInt(localStorage.getItem('nt-short-break') ?? '5', 10);
+    return Number.isNaN(sb) ? 5 : sb;
+  });
+  const [longBreak, setLongBreak] = useState(() => {
+    if (typeof window === 'undefined') return 15;
     const lb = parseInt(localStorage.getItem('nt-long-break') ?? '15', 10);
-    if (!isNaN(fd)) setFocusDuration(fd);
-    if (!isNaN(sb)) setShortBreak(sb);
-    if (!isNaN(lb)) setLongBreak(lb);
-  }, []);
+    return Number.isNaN(lb) ? 15 : lb;
+  });
 
   function handleThemeChange(next: 'light' | 'dark') {
     setTheme(next);

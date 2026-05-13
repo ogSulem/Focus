@@ -293,7 +293,13 @@ export function GoalsClient({ token }: GoalsClientProps) {
 
   useEffect(() => {
     let cancelled = false;
-    void fetchGoals().then(() => { if (!cancelled) setLoading(false); });
+    const run = async () => {
+      await fetchGoals();
+      if (!cancelled) {
+        setTimeout(() => setLoading(false), 0);
+      }
+    };
+    void run();
     return () => { cancelled = true; };
   }, [fetchGoals]);
 

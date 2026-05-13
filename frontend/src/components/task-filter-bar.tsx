@@ -89,13 +89,6 @@ export function TaskFilterBar({ tasks: initialTasks, apiUrl, token }: TaskFilter
     : tagFiltered;
   const visible = sortTasks(searchFiltered, sortBy, sortOrder);
 
-  function clearFilters() {
-    setActive('ALL');
-    setActiveTag(null);
-    setSearchQuery('');
-    clearSelection();
-  }
-
   function toggleSelect(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);

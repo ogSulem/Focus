@@ -48,27 +48,6 @@ function loadPhaseSecs(): Record<Phase, number> {
   };
 }
 
-function playDoneSound() {
-  try {
-    const ctx = new AudioContext();
-    const notes = [880, 1100, 880];
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      const start = ctx.currentTime + i * 0.22;
-      gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(0.4, start + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
-      osc.start(start);
-      osc.stop(start + 0.4);
-    });
-  } catch { /* ignore if audio not available */ }
-}
-
 const PHASE_LABEL: Record<Phase, string> = {
   focus: 'Фокус',
   'short-break': 'Короткий перерыв',

@@ -1,15 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import '@fontsource-variable/inter';
 import './globals.css';
 import { ThemeScript } from '@/components/theme-script';
 import { RouteProgress } from '@/components/route-progress';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
-
-const inter = Inter({
-  subsets: ['latin', 'cyrillic'],
-  variable: '--font-inter',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: { default: 'NeuroTrack', template: '%s | NeuroTrack' },
@@ -63,7 +57,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" suppressHydrationWarning className={inter.variable}>
+    <html lang="ru" suppressHydrationWarning>
       <head>
         <ThemeScript />
       </head>
