@@ -1287,8 +1287,14 @@ let AnalyticsService = class AnalyticsService {
         });
         scenarios.sort((a, b) => b.projectedCompletedTasksWeekly - a.projectedCompletedTasksWeekly);
         const bestScenario = scenarios[0];
+        const observedDays = dayKeys.reduce((acc, d) => {
+            const hasSignal = (tasksByDay[d] ?? 0) > 0 ||
+                (focusByDay[d] ?? 0) > 0 ||
+                (habitByDay[d] ?? 0) > 0;
+            return hasSignal ? acc + 1 : acc;
+        }, 0);
         const MIN_DAYS_FOR_MEDIUM_CONFIDENCE = 35;
-        const confidence = dayKeys.length >= MIN_DAYS_FOR_MEDIUM_CONFIDENCE ? 'medium' : 'low';
+        const confidence = observedDays >= MIN_DAYS_FOR_MEDIUM_CONFIDENCE ? 'medium' : 'low';
         return {
             baseline: {
                 completedTasksWeekly: baselineWeekly,

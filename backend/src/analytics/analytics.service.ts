@@ -1831,10 +1831,18 @@ export class AnalyticsService {
     );
 
     const bestScenario = scenarios[0];
-    // Minimum observed days needed for medium confidence in 42-day window.
+    const observedDays = dayKeys.reduce((acc, d) => {
+      const hasSignal =
+        (tasksByDay[d] ?? 0) > 0 ||
+        (focusByDay[d] ?? 0) > 0 ||
+        (habitByDay[d] ?? 0) > 0;
+      return hasSignal ? acc + 1 : acc;
+    }, 0);
+
+    // Minimum active days needed for medium confidence in 42-day window.
     const MIN_DAYS_FOR_MEDIUM_CONFIDENCE = 35;
     const confidence: ScenarioSimulatorPayload['confidence'] =
-      dayKeys.length >= MIN_DAYS_FOR_MEDIUM_CONFIDENCE ? 'medium' : 'low';
+      observedDays >= MIN_DAYS_FOR_MEDIUM_CONFIDENCE ? 'medium' : 'low';
 
     return {
       baseline: {
