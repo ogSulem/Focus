@@ -6,8 +6,24 @@ import {
 } from 'recharts';
 import { YearlyHeatmap } from '@/components/yearly-heatmap';
 import { HabitStatsCard } from '@/components/habit-stats-card';
+import { IntelligenceStoryCard } from '@/components/intelligence-story-card';
+import { ExperimentReportCard } from '@/components/experiment-report-card';
+import { BurnoutRiskCard } from '@/components/burnout-risk-card';
+import { ArchetypeCard } from '@/components/archetype-card';
+import { VelocityForecastCard } from '@/components/velocity-forecast-card';
+import { FocusDepthCard } from '@/components/focus-depth-card';
+import { HabitCorrelationCard } from '@/components/habit-correlation-card';
 import { ScenarioSimulatorCard } from '@/components/scenario-simulator-card';
-import type { ScenarioSimulatorPayload } from '@/lib/api';
+import type {
+  ArchetypePayload,
+  BurnoutIndexPayload,
+  ExperimentReport,
+  FocusDepthPayload,
+  HabitCorrelationPayload,
+  IntelligencePayload,
+  ScenarioSimulatorPayload,
+  VelocityForecastPayload,
+} from '@/lib/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface ProductivityPoint { date: string; completedTasksCount: number; totalTasksCount: number; }
@@ -162,11 +178,25 @@ function EmptyState() {
 export function AnalyticsClient({
   overview,
   scenarioSimulator,
+  intelligence,
+  experimentReport,
+  burnout,
+  archetype,
+  velocityForecast,
+  focusDepth,
+  habitCorrelation,
   apiUrl,
   token,
 }: {
   overview: OverviewPayload | null;
   scenarioSimulator?: ScenarioSimulatorPayload | null;
+  intelligence?: IntelligencePayload | null;
+  experimentReport?: ExperimentReport | null;
+  burnout?: BurnoutIndexPayload | null;
+  archetype?: ArchetypePayload | null;
+  velocityForecast?: VelocityForecastPayload | null;
+  focusDepth?: FocusDepthPayload | null;
+  habitCorrelation?: HabitCorrelationPayload | null;
   apiUrl?: string;
   token?: string;
 }) {
@@ -347,6 +377,15 @@ export function AnalyticsClient({
           <YearlyHeatmap apiUrl={apiUrl} token={token} />
         </section>
       )}
+
+      {/* ── Row 8+: AI & Research modules ── */}
+      {intelligence && <IntelligenceStoryCard intelligence={intelligence} />}
+      {experimentReport && <ExperimentReportCard report={experimentReport} />}
+      {burnout && <BurnoutRiskCard burnout={burnout} />}
+      {archetype && <ArchetypeCard archetype={archetype} />}
+      {velocityForecast && <VelocityForecastCard forecast={velocityForecast} />}
+      {focusDepth && <FocusDepthCard focusDepth={focusDepth} />}
+      {habitCorrelation && <HabitCorrelationCard habitCorrelation={habitCorrelation} />}
 
     </div>
   );
