@@ -189,7 +189,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3001/api npm run dev
 ### 🧪 Научная ценность (новое)
 - **Before/After метрики** по окну 14 дней (7 + 7): completed tasks, completion rate, overdue, habit completions, focus minutes
 - **Экспериментальный блок на дашборде** с измеримым эффектом внедрения интеллектуального модуля
-- **Формулы модели** в API (`modelMeta`) для прозрачности и обоснования методики в ВКР
+- **Формулы модели и explainability** показываются в UI (Intelligence card) на основе `modelMeta` для прозрачности и обоснования методики в ВКР
 
 ### ⚙️ Настройки
 - **Profile Settings** — обновление имени пользователя

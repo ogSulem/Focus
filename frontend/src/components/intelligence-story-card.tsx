@@ -92,6 +92,29 @@ export function IntelligenceStoryCard({ intelligence }: IntelligenceStoryCardPro
         ))}
       </div>
 
+      <section style={{ marginTop: 10, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-base)', padding: '12px 14px' }}>
+        <p style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)', marginBottom: 8 }}>
+          Прозрачность модели
+        </p>
+        <div style={{ display: 'grid', gap: 8 }}>
+          <div>
+            <p style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Формула планирования</p>
+            <code style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+              {intelligence.modelMeta.planningFormula}
+            </code>
+          </div>
+          <div>
+            <p style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Формула прогнозирования</p>
+            <code style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+              {intelligence.modelMeta.predictionFormula}
+            </code>
+          </div>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', lineHeight: 1.45 }}>
+            {intelligence.modelMeta.explainability}
+          </p>
+        </div>
+      </section>
+
       {topHabit.length > 0 && (
         <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {topHabit.map((habit) => (
