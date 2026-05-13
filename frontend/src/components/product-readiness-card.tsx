@@ -1,15 +1,15 @@
 'use client';
 
-interface DiplomaComplianceCardProps {
+interface ProductReadinessCardProps {
   checks?: Array<{ label: string; status: 'done' | 'in_progress' }>;
 }
 
-const DEFAULT_CHECKS: NonNullable<DiplomaComplianceCardProps['checks']> = [
+const DEFAULT_CHECKS: NonNullable<ProductReadinessCardProps['checks']> = [
   { label: 'Модульная fullstack-архитектура (Frontend/Backend/DB/Analytics)', status: 'done' },
   { label: 'JWT + refresh + защищённые маршруты', status: 'done' },
   { label: 'Task/Habit management + CRUD', status: 'done' },
   { label: 'AI-аналитика (rule-based + explainability)', status: 'done' },
-  { label: 'Before/After экспериментальный отчёт', status: 'done' },
+  { label: 'Before/After метрики эффективности', status: 'done' },
   { label: 'Dashboard: графики + heatmap + календарь дедлайнов', status: 'done' },
   { label: 'Dark mode + responsive + быстрые действия', status: 'done' },
   { label: 'Swagger / Docker / экспорт данных', status: 'done' },
@@ -17,7 +17,7 @@ const DEFAULT_CHECKS: NonNullable<DiplomaComplianceCardProps['checks']> = [
   { label: 'CI/CD automation и расширенная прод-инфра', status: 'in_progress' },
 ];
 
-export function DiplomaComplianceCard({ checks = DEFAULT_CHECKS }: DiplomaComplianceCardProps) {
+export function ProductReadinessCard({ checks = DEFAULT_CHECKS }: ProductReadinessCardProps) {
   const doneCount = checks.filter((c) => c.status === 'done').length;
   const totalCount = checks.length;
   const progress = Math.round((doneCount / totalCount) * 100);
@@ -26,9 +26,9 @@ export function DiplomaComplianceCard({ checks = DEFAULT_CHECKS }: DiplomaCompli
     <section className="card glow-card animate-slide-up" style={{ padding: '22px', marginBottom: 14 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
         <div>
-          <h2 style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>🎓 Дипломный чеклист качества</h2>
+          <h2 style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>🚀 Product Readiness</h2>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-            Самопроверка соответствия ключевым требованиям ТЗ/методических указаний
+            Прозрачная матрица зрелости продукта по ключевым направлениям
           </p>
         </div>
         <span className="badge badge-done" style={{ fontSize: '0.7rem' }}>

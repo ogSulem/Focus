@@ -32,7 +32,7 @@ import { FocusDepthCard } from '@/components/focus-depth-card';
 import { HabitCorrelationCard } from '@/components/habit-correlation-card';
 import { ScenarioSimulatorCard } from '@/components/scenario-simulator-card';
 import { TaskDeadlineCalendar } from '@/components/task-deadline-calendar';
-import { DiplomaComplianceCard } from '@/components/diploma-compliance-card';
+import { ProductReadinessCard } from '@/components/product-readiness-card';
 
 export default async function Home() {
   // Read access token from the secure httpOnly cookie set by /api/auth/set
@@ -321,8 +321,8 @@ export default async function Home() {
         {/* ── Deadline Calendar (new) ── */}
         <TaskDeadlineCalendar tasks={data.tasks} />
 
-        {/* ── Diploma Compliance Matrix (new) ── */}
-        <DiplomaComplianceCard />
+        {/* ── Product Readiness Matrix ── */}
+        <ProductReadinessCard />
 
         {/* ── Tasks + Habits ── */}
         <section id="tasks-section" className="dashboard-grid-equal">

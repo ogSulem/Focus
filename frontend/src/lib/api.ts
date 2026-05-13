@@ -366,7 +366,7 @@ const DEMO_DATA: DashboardData = {
       prioritizedTasks: [
         {
           id: 'demo-plan-1',
-          title: 'Закрыть блокер по дипломному модулю аналитики',
+          title: 'Закрыть блокер по модулю аналитики',
           score: 92,
           priority: 'HIGH',
           status: 'IN_PROGRESS',
@@ -376,7 +376,7 @@ const DEMO_DATA: DashboardData = {
         },
         {
           id: 'demo-plan-2',
-          title: 'Подготовить визуализации для защиты',
+          title: 'Подготовить релизные визуализации KPI',
           score: 84,
           priority: 'HIGH',
           status: 'TODO',
