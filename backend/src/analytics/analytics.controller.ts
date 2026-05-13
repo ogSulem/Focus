@@ -139,9 +139,7 @@ export class AnalyticsController {
     summary:
       'Flow State & Deep Work Index: measures cognitive depth from focus session patterns (Csikszentmihalyi model)',
   })
-  getFocusDepth(
-    @CurrentUser() user: JwtPayload,
-  ): Promise<FocusDepthPayload> {
+  getFocusDepth(@CurrentUser() user: JwtPayload): Promise<FocusDepthPayload> {
     return this.analyticsService.getFocusDepth(user.sub);
   }
 

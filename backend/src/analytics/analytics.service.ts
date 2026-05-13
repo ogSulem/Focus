@@ -1412,7 +1412,12 @@ export class AnalyticsService {
       hourCounts[h]++;
     });
 
-    const blockLabels = ['Ночь 0-6', 'Утро 6-12', 'День 12-18', 'Вечер 18-24'] as const;
+    const blockLabels = [
+      'Ночь 0-6',
+      'Утро 6-12',
+      'День 12-18',
+      'Вечер 18-24',
+    ] as const;
     const blockKeys = ['night', 'morning', 'afternoon', 'evening'] as const;
     const blockCounts = [
       hourCounts.slice(0, 6).reduce((a, b) => a + b, 0),
@@ -1453,7 +1458,9 @@ export class AnalyticsService {
     });
     const dayVals = Object.values(dailyCounts);
     const mean = dayVals.reduce((a, b) => a + b, 0) / (dayVals.length || 1);
-    const variance = dayVals.reduce((acc, v) => acc + (v - mean) ** 2, 0) / (dayVals.length || 1);
+    const variance =
+      dayVals.reduce((acc, v) => acc + (v - mean) ** 2, 0) /
+      (dayVals.length || 1);
     const stdDev = Math.sqrt(variance);
     const rhythmScore = mean > 0 ? Math.max(0, 1 - stdDev / mean) : 0;
 
@@ -1463,16 +1470,19 @@ export class AnalyticsService {
     // composite flow state score
     const rawScore =
       0.35 * sessionConsistency +
-      0.30 * avgDepthComponent +
-      0.20 * rhythmScore +
+      0.3 * avgDepthComponent +
+      0.2 * rhythmScore +
       0.15 * peakAlignment;
     const flowStateScore = Math.round(rawScore * 100);
 
     const level: FocusDepthPayload['level'] =
-      flowStateScore >= 75 ? 'deep-flow'
-      : flowStateScore >= 50 ? 'flow'
-      : flowStateScore >= 25 ? 'shallow'
-      : 'distracted';
+      flowStateScore >= 75
+        ? 'deep-flow'
+        : flowStateScore >= 50
+          ? 'flow'
+          : flowStateScore >= 25
+            ? 'shallow'
+            : 'distracted';
 
     // longest streak days
     const sortedDays = Object.keys(dailyCounts).sort();
@@ -1493,20 +1503,32 @@ export class AnalyticsService {
     // insights
     const insights: string[] = [];
     if (avgDuration >= 45) {
-      insights.push(`Средняя сессия ${Math.round(avgDuration)} мин — вы работаете в зоне глубокого фокуса.`);
+      insights.push(
+        `Средняя сессия ${Math.round(avgDuration)} мин — вы работаете в зоне глубокого фокуса.`,
+      );
     } else {
-      insights.push(`Средняя сессия всего ${Math.round(avgDuration)} мин. Попробуйте увеличить до 45+ для deep work.`);
+      insights.push(
+        `Средняя сессия всего ${Math.round(avgDuration)} мин. Попробуйте увеличить до 45+ для deep work.`,
+      );
     }
     if (sessionConsistency >= 0.6) {
-      insights.push(`Высокая регулярность: фокус-сессии в ${activeDays} из 30 дней.`);
+      insights.push(
+        `Высокая регулярность: фокус-сессии в ${activeDays} из 30 дней.`,
+      );
     } else {
-      insights.push(`Низкая регулярность: фокус-сессии лишь в ${activeDays} из 30 дней.`);
+      insights.push(
+        `Низкая регулярность: фокус-сессии лишь в ${activeDays} из 30 дней.`,
+      );
     }
     if (rhythmScore >= 0.7) {
-      insights.push('Стабильный ритм сессий — хороший признак когнитивной дисциплины.');
+      insights.push(
+        'Стабильный ритм сессий — хороший признак когнитивной дисциплины.',
+      );
     }
     if (peakAlignment >= 0.6) {
-      insights.push(`Большинство сессий в пиковое окно (${blockLabels[maxBlockIdx]}) — отличное выравнивание.`);
+      insights.push(
+        `Большинство сессий в пиковое окно (${blockLabels[maxBlockIdx]}) — отличное выравнивание.`,
+      );
     }
 
     return {
@@ -1543,7 +1565,11 @@ export class AnalyticsService {
         select: { id: true, name: true, completedDays: true },
       }),
       this.prisma.task.findMany({
-        where: { userId, status: TaskStatus.DONE, completedAt: { gte: sixtyDaysAgo } },
+        where: {
+          userId,
+          status: TaskStatus.DONE,
+          completedAt: { gte: sixtyDaysAgo },
+        },
         select: { completedAt: true },
       }),
     ]);
@@ -1606,8 +1632,8 @@ export class AnalyticsService {
         direction === 'positive'
           ? `Выполнение «${habit.name}» ассоциировано с ростом продуктивности на следующий день (+${Math.round(r * 100)}%).`
           : direction === 'negative'
-          ? `«${habit.name}» негативно коррелирует с задачами следующего дня. Возможно, она отнимает когнитивный ресурс.`
-          : `«${habit.name}» не показывает значимой связи с продуктивностью.`;
+            ? `«${habit.name}» негативно коррелирует с задачами следующего дня. Возможно, она отнимает когнитивный ресурс.`
+            : `«${habit.name}» не показывает значимой связи с продуктивностью.`;
 
       correlations.push({
         habitId: habit.id,
@@ -1622,18 +1648,20 @@ export class AnalyticsService {
     // Sort by |r| descending
     correlations.sort((a, b) => Math.abs(b.r) - Math.abs(a.r));
 
-    const topPositive = correlations.filter((c) => c.direction === 'positive')[0] ?? null;
+    const topPositive =
+      correlations.filter((c) => c.direction === 'positive')[0] ?? null;
     const summary =
       correlations.length === 0
         ? 'Недостаточно данных для корреляционного анализа (нужно ≥ 8 дней выполнения каждой привычки).'
         : topPositive
-        ? `Самый сильный предиктор продуктивности: «${topPositive.habitName}» (r = ${topPositive.r}). Приоритизируйте её.`
-        : 'Значимых позитивных предикторов не обнаружено — попробуйте практиковать привычки регулярнее.';
+          ? `Самый сильный предиктор продуктивности: «${topPositive.habitName}» (r = ${topPositive.r}). Приоритизируйте её.`
+          : 'Значимых позитивных предикторов не обнаружено — попробуйте практиковать привычки регулярнее.';
 
     return {
       correlations,
       summary,
-      modelFormula: 'r = Σ(Xi−X̄)(Yi+1−Ȳ) / √[Σ(Xi−X̄)²·Σ(Yi+1−Ȳ)²]  (Pearson, lag-1)',
+      modelFormula:
+        'r = Σ(Xi−X̄)(Yi+1−Ȳ) / √[Σ(Xi−X̄)²·Σ(Yi+1−Ȳ)²]  (Pearson, lag-1)',
       dataWindowDays: 60,
     };
   }

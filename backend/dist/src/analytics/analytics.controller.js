@@ -59,6 +59,12 @@ let AnalyticsController = class AnalyticsController {
     getVelocityForecast(user) {
         return this.analyticsService.getVelocityForecast(user.sub);
     }
+    getFocusDepth(user) {
+        return this.analyticsService.getFocusDepth(user.sub);
+    }
+    getHabitCorrelation(user) {
+        return this.analyticsService.getHabitCorrelation(user.sub);
+    }
 };
 exports.AnalyticsController = AnalyticsController;
 __decorate([
@@ -177,6 +183,26 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getVelocityForecast", null);
+__decorate([
+    (0, common_1.Get)('focus-depth'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Flow State & Deep Work Index: measures cognitive depth from focus session patterns (Csikszentmihalyi model)',
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getFocusDepth", null);
+__decorate([
+    (0, common_1.Get)('habit-correlation'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Pearson lag-1 correlation between each habit completion and next-day task output (60-day window)',
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getHabitCorrelation", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, swagger_1.ApiTags)('analytics'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

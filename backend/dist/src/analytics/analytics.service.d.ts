@@ -103,6 +103,8 @@ export declare class AnalyticsService {
     getBurnoutIndex(userId: string): Promise<BurnoutIndexPayload>;
     getProductivityArchetype(userId: string): Promise<ArchetypePayload>;
     getVelocityForecast(userId: string): Promise<VelocityForecastPayload>;
+    getFocusDepth(userId: string): Promise<FocusDepthPayload>;
+    getHabitCorrelation(userId: string): Promise<HabitCorrelationPayload>;
 }
 export interface TrendsPayload {
     completedTasks: {
@@ -182,4 +184,35 @@ export interface VelocityForecastPayload {
     trendSlope: number;
     rSquared: number;
     modelFormula: string;
+}
+export interface FocusDepthPayload {
+    flowStateScore: number;
+    level: 'none' | 'distracted' | 'shallow' | 'flow' | 'deep-flow';
+    deepWorkIndex: number;
+    sessionConsistency: number;
+    avgSessionMin: number;
+    longestStreakDays: number;
+    peakHourBlock: 'morning' | 'afternoon' | 'evening' | 'night' | null;
+    hourBlocks: {
+        label: string;
+        key: 'morning' | 'afternoon' | 'evening' | 'night';
+        count: number;
+        isPeak: boolean;
+    }[];
+    modelFormula: string;
+    insights: string[];
+}
+export interface HabitCorrelationItem {
+    habitId: string;
+    habitName: string;
+    r: number;
+    direction: 'positive' | 'negative' | 'neutral';
+    activeDays: number;
+    interpretation: string;
+}
+export interface HabitCorrelationPayload {
+    correlations: HabitCorrelationItem[];
+    summary: string;
+    modelFormula: string;
+    dataWindowDays: number;
 }

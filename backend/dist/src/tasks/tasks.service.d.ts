@@ -33,24 +33,103 @@ export declare class TasksService {
     private readonly prisma;
     private readonly eventsService;
     constructor(prisma: PrismaService, eventsService: EventsService);
-    findAll(userId: string, filter?: TaskFilter): any;
+    findAll(userId: string, filter?: TaskFilter): import("@prisma/client").Prisma.PrismaPromise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        status: import("@prisma/client").$Enums.TaskStatus;
+        deadline: Date | null;
+        completedAt: Date | null;
+        tags: string[];
+        subtasks: import("@prisma/client/runtime/library").JsonValue;
+        userId: string;
+    }[]>;
     getUniqueTags(userId: string): Promise<string[]>;
     getStats(userId: string): Promise<TaskStats>;
-    findOne(userId: string, taskId: string): Promise<any>;
-    create(userId: string, dto: CreateTaskDto): Promise<any>;
-    update(userId: string, taskId: string, dto: UpdateTaskDto): Promise<any>;
+    findOne(userId: string, taskId: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        status: import("@prisma/client").$Enums.TaskStatus;
+        deadline: Date | null;
+        completedAt: Date | null;
+        tags: string[];
+        subtasks: import("@prisma/client/runtime/library").JsonValue;
+        userId: string;
+    }>;
+    create(userId: string, dto: CreateTaskDto): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        status: import("@prisma/client").$Enums.TaskStatus;
+        deadline: Date | null;
+        completedAt: Date | null;
+        tags: string[];
+        subtasks: import("@prisma/client/runtime/library").JsonValue;
+        userId: string;
+    }>;
+    update(userId: string, taskId: string, dto: UpdateTaskDto): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        status: import("@prisma/client").$Enums.TaskStatus;
+        deadline: Date | null;
+        completedAt: Date | null;
+        tags: string[];
+        subtasks: import("@prisma/client/runtime/library").JsonValue;
+        userId: string;
+    }>;
     remove(userId: string, taskId: string): Promise<{
         success: boolean;
     }>;
-    duplicate(userId: string, taskId: string): Promise<any>;
-    findUpcoming(userId: string, days?: number): Promise<any>;
+    duplicate(userId: string, taskId: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        status: import("@prisma/client").$Enums.TaskStatus;
+        deadline: Date | null;
+        completedAt: Date | null;
+        tags: string[];
+        subtasks: import("@prisma/client/runtime/library").JsonValue;
+        userId: string;
+    }>;
+    findUpcoming(userId: string, days?: number): Promise<{
+        daysLeft: number | null;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        status: import("@prisma/client").$Enums.TaskStatus;
+        deadline: Date | null;
+        completedAt: Date | null;
+        tags: string[];
+        subtasks: import("@prisma/client/runtime/library").JsonValue;
+        userId: string;
+    }[]>;
     bulkUpdate(userId: string, dto: BulkUpdateDto): Promise<{
-        affected: any;
+        affected: number;
         action: string;
         status?: undefined;
     } | {
-        affected: any;
+        affected: number;
         action: string;
-        status: any;
+        status: "TODO" | "IN_PROGRESS" | "DONE";
     }>;
 }

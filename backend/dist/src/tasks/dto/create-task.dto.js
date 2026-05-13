@@ -8,7 +8,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateTaskDto = exports.SubtaskDto = void 0;
 exports.isSubtaskDto = isSubtaskDto;
@@ -65,13 +64,13 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: client_1.TaskPriority, default: client_1.TaskPriority.MEDIUM }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(client_1.TaskPriority),
-    __metadata("design:type", typeof (_a = typeof client_1.TaskPriority !== "undefined" && client_1.TaskPriority) === "function" ? _a : Object)
+    __metadata("design:type", String)
 ], CreateTaskDto.prototype, "priority", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: client_1.TaskStatus, default: client_1.TaskStatus.TODO }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(client_1.TaskStatus),
-    __metadata("design:type", typeof (_b = typeof client_1.TaskStatus !== "undefined" && client_1.TaskStatus) === "function" ? _b : Object)
+    __metadata("design:type", String)
 ], CreateTaskDto.prototype, "status", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: '2025-12-31T23:59:59.000Z' }),
