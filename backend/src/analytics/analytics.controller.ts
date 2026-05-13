@@ -8,6 +8,8 @@ import {
   AnalyticsSummary,
   ArchetypePayload,
   BurnoutIndexPayload,
+  FocusDepthPayload,
+  HabitCorrelationPayload,
   HeatmapDay,
   IntelligencePayload,
   OverviewPayload,
@@ -130,5 +132,27 @@ export class AnalyticsController {
     @CurrentUser() user: JwtPayload,
   ): Promise<VelocityForecastPayload> {
     return this.analyticsService.getVelocityForecast(user.sub);
+  }
+
+  @Get('focus-depth')
+  @ApiOperation({
+    summary:
+      'Flow State & Deep Work Index: measures cognitive depth from focus session patterns (Csikszentmihalyi model)',
+  })
+  getFocusDepth(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<FocusDepthPayload> {
+    return this.analyticsService.getFocusDepth(user.sub);
+  }
+
+  @Get('habit-correlation')
+  @ApiOperation({
+    summary:
+      'Pearson lag-1 correlation between each habit completion and next-day task output (60-day window)',
+  })
+  getHabitCorrelation(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<HabitCorrelationPayload> {
+    return this.analyticsService.getHabitCorrelation(user.sub);
   }
 }

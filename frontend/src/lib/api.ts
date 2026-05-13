@@ -144,6 +144,40 @@ export interface VelocityForecastPayload {
   modelFormula: string;
 }
 
+export interface FocusDepthPayload {
+  flowStateScore: number; // 0–100
+  level: 'none' | 'distracted' | 'shallow' | 'flow' | 'deep-flow';
+  deepWorkIndex: number; // % sessions ≥ 45 min
+  sessionConsistency: number; // % days active
+  avgSessionMin: number;
+  longestStreakDays: number;
+  peakHourBlock: 'morning' | 'afternoon' | 'evening' | 'night' | null;
+  hourBlocks: {
+    label: string;
+    key: 'morning' | 'afternoon' | 'evening' | 'night';
+    count: number;
+    isPeak: boolean;
+  }[];
+  modelFormula: string;
+  insights: string[];
+}
+
+export interface HabitCorrelationItem {
+  habitId: string;
+  habitName: string;
+  r: number; // Pearson, –1..1
+  direction: 'positive' | 'negative' | 'neutral';
+  activeDays: number;
+  interpretation: string;
+}
+
+export interface HabitCorrelationPayload {
+  correlations: HabitCorrelationItem[];
+  summary: string;
+  modelFormula: string;
+  dataWindowDays: number;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -163,6 +197,8 @@ export interface DashboardData {
   burnout: BurnoutIndexPayload;
   archetype: ArchetypePayload;
   velocityForecast: VelocityForecastPayload;
+  focusDepth: FocusDepthPayload;
+  habitCorrelation: HabitCorrelationPayload;
   user?: UserProfile;
 }
 
@@ -427,6 +463,61 @@ const DEMO_DATA: DashboardData = {
     rSquared: 0.87,
     modelFormula: 'ŷ = 7.5 + 1.3·x  (OLS, R²=0.87)',
   },
+  focusDepth: {
+    flowStateScore: 67,
+    level: 'flow',
+    deepWorkIndex: 58,
+    sessionConsistency: 70,
+    avgSessionMin: 42,
+    longestStreakDays: 8,
+    peakHourBlock: 'morning',
+    hourBlocks: [
+      { label: 'Ночь 0-6',  key: 'night',     count: 1,  isPeak: false },
+      { label: 'Утро 6-12', key: 'morning',   count: 14, isPeak: true  },
+      { label: 'День 12-18',key: 'afternoon', count: 8,  isPeak: false },
+      { label: 'Вечер 18-24',key: 'evening',  count: 5,  isPeak: false },
+    ],
+    modelFormula: 'flowStateScore = 0.35·consistency + 0.30·depth + 0.20·rhythm + 0.15·peakAlignment',
+    insights: [
+      'Средняя сессия 42 мин — вы работаете в зоне глубокого фокуса.',
+      'Высокая регулярность: фокус-сессии в 21 из 30 дней.',
+      'Большинство сессий утром (6–12 ч) — отличное выравнивание с пиком энергии.',
+    ],
+  },
+  habitCorrelation: {
+    correlations: [
+      {
+        habitId: 'demo-h1',
+        habitName: 'Deep Work 2h',
+        r: 0.52,
+        direction: 'positive',
+        activeDays: 14,
+        interpretation:
+          'Выполнение «Deep Work 2h» ассоциировано с ростом продуктивности на следующий день (+52%).',
+      },
+      {
+        habitId: 'demo-h2',
+        habitName: 'Планирование дня',
+        r: 0.38,
+        direction: 'positive',
+        activeDays: 18,
+        interpretation:
+          'Выполнение «Планирование дня» ассоциировано с ростом продуктивности на следующий день (+38%).',
+      },
+      {
+        habitId: 'demo-h3',
+        habitName: 'Чтение 30 минут',
+        r: 0.11,
+        direction: 'neutral',
+        activeDays: 9,
+        interpretation: '«Чтение 30 минут» не показывает значимой связи с продуктивностью.',
+      },
+    ],
+    summary:
+      'Самый сильный предиктор продуктивности: «Deep Work 2h» (r = 0.52). Приоритизируйте её.',
+    modelFormula: 'r = Σ(Xi−X̄)(Yi+1−Ȳ) / √[Σ(Xi−X̄)²·Σ(Yi+1−Ȳ)²]  (Pearson, lag-1)',
+    dataWindowDays: 60,
+  },
 };
 
 export async function getDashboardData(token?: string): Promise<DashboardData> {
@@ -435,7 +526,7 @@ export async function getDashboardData(token?: string): Promise<DashboardData> {
   }
 
   try {
-    const [tasks, habits, weekly, recommendations, intelligence, experimentReport, burnout, archetype, velocityForecast, user] =
+    const [tasks, habits, weekly, recommendations, intelligence, experimentReport, burnout, archetype, velocityForecast, focusDepth, habitCorrelation, user] =
       await Promise.all([
         apiFetch<Task[]>('/tasks', token),
         apiFetch<Habit[]>('/habits', token),
@@ -446,6 +537,8 @@ export async function getDashboardData(token?: string): Promise<DashboardData> {
         apiFetch<BurnoutIndexPayload>('/analytics/burnout-index', token),
         apiFetch<ArchetypePayload>('/analytics/archetype', token),
         apiFetch<VelocityForecastPayload>('/analytics/velocity-forecast', token),
+        apiFetch<FocusDepthPayload>('/analytics/focus-depth', token),
+        apiFetch<HabitCorrelationPayload>('/analytics/habit-correlation', token),
         apiFetch<UserProfile>('/users/me', token).catch(() => null),
       ]);
 
@@ -465,6 +558,8 @@ export async function getDashboardData(token?: string): Promise<DashboardData> {
       burnout,
       archetype,
       velocityForecast,
+      focusDepth,
+      habitCorrelation,
       user: user ?? undefined,
     };
   } catch {

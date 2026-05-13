@@ -1361,6 +1361,282 @@ export class AnalyticsService {
       modelFormula: `ŷ = ${round1(beta0)} + ${round1(beta1)}·x  (OLS, R²=${round1(ssXX > 0 ? 1 - sse / (ys.reduce((acc, y) => acc + (y - yMean) ** 2, 0) || 1) : 0)})`,
     };
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Focus Depth & Flow State Analysis
+  // Algorithm:
+  //   flowStateScore = 0.35*sessionConsistency + 0.30*avgDepth
+  //                  + 0.20*rhythmScore + 0.15*peakAlignment
+  // sessionConsistency = #sessions / dailyTarget (capped at 1)
+  // avgDepth           = (avgDuration / 90) capped at 1 (90 min = "deep work" zone)
+  // rhythmScore        = 1 - (stdDev of daily gaps / meanGap), capped [0,1]
+  // peakAlignment      = fraction of sessions in user's identified peak window
+  // All components normalised to [0, 1]; score maps to [0, 100].
+  // ─────────────────────────────────────────────────────────────────────────
+  async getFocusDepth(userId: string): Promise<FocusDepthPayload> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const sessions = await this.prisma.focusSession.findMany({
+      where: { userId, phase: 'focus', completedAt: { gte: thirtyDaysAgo } },
+      select: { durationMin: true, completedAt: true },
+      orderBy: { completedAt: 'asc' },
+    });
+
+    const totalSessions = sessions.length;
+
+    if (totalSessions === 0) {
+      return {
+        flowStateScore: 0,
+        level: 'none',
+        deepWorkIndex: 0,
+        sessionConsistency: 0,
+        avgSessionMin: 0,
+        longestStreakDays: 0,
+        peakHourBlock: null,
+        hourBlocks: [],
+        modelFormula:
+          'flowStateScore = 0.35·consistency + 0.30·depth + 0.20·rhythm + 0.15·peakAlignment',
+        insights: ['Нет данных о фокус-сессиях за 30 дней'],
+      };
+    }
+
+    // avgDuration
+    const totalMin = sessions.reduce((acc, s) => acc + s.durationMin, 0);
+    const avgDuration = totalMin / totalSessions;
+
+    // hour block analysis (24 slots → aggregate into 4 named blocks)
+    const hourCounts = new Array(24).fill(0) as number[];
+    sessions.forEach((s) => {
+      const h = s.completedAt.getHours();
+      hourCounts[h]++;
+    });
+
+    const blockLabels = ['Ночь 0-6', 'Утро 6-12', 'День 12-18', 'Вечер 18-24'] as const;
+    const blockKeys = ['night', 'morning', 'afternoon', 'evening'] as const;
+    const blockCounts = [
+      hourCounts.slice(0, 6).reduce((a, b) => a + b, 0),
+      hourCounts.slice(6, 12).reduce((a, b) => a + b, 0),
+      hourCounts.slice(12, 18).reduce((a, b) => a + b, 0),
+      hourCounts.slice(18, 24).reduce((a, b) => a + b, 0),
+    ];
+    const maxBlockIdx = blockCounts.indexOf(Math.max(...blockCounts));
+    const peakHourBlock = blockKeys[maxBlockIdx];
+
+    const hourBlocks: FocusDepthPayload['hourBlocks'] = blockLabels.map(
+      (label, i) => ({
+        label,
+        key: blockKeys[i],
+        count: blockCounts[i],
+        isPeak: i === maxBlockIdx,
+      }),
+    );
+
+    // consistency: active days / 30
+    const activeDays = new Set(
+      sessions.map((s) => s.completedAt.toISOString().slice(0, 10)),
+    ).size;
+    const sessionConsistency = Math.min(activeDays / 20, 1); // target: 20 active days / month
+
+    // avgDepth component
+    const avgDepthComponent = Math.min(avgDuration / 90, 1);
+
+    // deep work index: % of sessions ≥ 45 min
+    const deepSessions = sessions.filter((s) => s.durationMin >= 45).length;
+    const deepWorkIndex = Math.round((deepSessions / totalSessions) * 100);
+
+    // rhythmScore: measure consistency of daily session distribution
+    const dailyCounts: Record<string, number> = {};
+    sessions.forEach((s) => {
+      const day = s.completedAt.toISOString().slice(0, 10);
+      dailyCounts[day] = (dailyCounts[day] ?? 0) + 1;
+    });
+    const dayVals = Object.values(dailyCounts);
+    const mean = dayVals.reduce((a, b) => a + b, 0) / (dayVals.length || 1);
+    const variance = dayVals.reduce((acc, v) => acc + (v - mean) ** 2, 0) / (dayVals.length || 1);
+    const stdDev = Math.sqrt(variance);
+    const rhythmScore = mean > 0 ? Math.max(0, 1 - stdDev / mean) : 0;
+
+    // peakAlignment: sessions in peak block / total
+    const peakAlignment = blockCounts[maxBlockIdx] / totalSessions;
+
+    // composite flow state score
+    const rawScore =
+      0.35 * sessionConsistency +
+      0.30 * avgDepthComponent +
+      0.20 * rhythmScore +
+      0.15 * peakAlignment;
+    const flowStateScore = Math.round(rawScore * 100);
+
+    const level: FocusDepthPayload['level'] =
+      flowStateScore >= 75 ? 'deep-flow'
+      : flowStateScore >= 50 ? 'flow'
+      : flowStateScore >= 25 ? 'shallow'
+      : 'distracted';
+
+    // longest streak days
+    const sortedDays = Object.keys(dailyCounts).sort();
+    let longestStreakDays = 0;
+    let currentStreak = 0;
+    for (let i = 0; i < sortedDays.length; i++) {
+      if (i === 0) {
+        currentStreak = 1;
+      } else {
+        const prev = new Date(sortedDays[i - 1]);
+        const curr = new Date(sortedDays[i]);
+        const diff = (curr.getTime() - prev.getTime()) / 86_400_000;
+        currentStreak = diff === 1 ? currentStreak + 1 : 1;
+      }
+      longestStreakDays = Math.max(longestStreakDays, currentStreak);
+    }
+
+    // insights
+    const insights: string[] = [];
+    if (avgDuration >= 45) {
+      insights.push(`Средняя сессия ${Math.round(avgDuration)} мин — вы работаете в зоне глубокого фокуса.`);
+    } else {
+      insights.push(`Средняя сессия всего ${Math.round(avgDuration)} мин. Попробуйте увеличить до 45+ для deep work.`);
+    }
+    if (sessionConsistency >= 0.6) {
+      insights.push(`Высокая регулярность: фокус-сессии в ${activeDays} из 30 дней.`);
+    } else {
+      insights.push(`Низкая регулярность: фокус-сессии лишь в ${activeDays} из 30 дней.`);
+    }
+    if (rhythmScore >= 0.7) {
+      insights.push('Стабильный ритм сессий — хороший признак когнитивной дисциплины.');
+    }
+    if (peakAlignment >= 0.6) {
+      insights.push(`Большинство сессий в пиковое окно (${blockLabels[maxBlockIdx]}) — отличное выравнивание.`);
+    }
+
+    return {
+      flowStateScore,
+      level,
+      deepWorkIndex,
+      sessionConsistency: Math.round(sessionConsistency * 100),
+      avgSessionMin: Math.round(avgDuration),
+      longestStreakDays,
+      peakHourBlock,
+      hourBlocks,
+      modelFormula:
+        'flowStateScore = 0.35·consistency + 0.30·depth + 0.20·rhythm + 0.15·peakAlignment',
+      insights,
+    };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Habit–Task Pearson Correlation Analysis
+  // For each habit: compute r(habit_day_i, tasks_completed_day_i+1)
+  // Pearson r ∈ [-1, 1]:
+  //   r > 0.3  → positive predictor
+  //   r < -0.3 → negative predictor (habit done → fewer tasks next day)
+  //   |r| < 0.3 → neutral
+  // Only habits with ≥10 data points are reported (statistical reliability).
+  // ─────────────────────────────────────────────────────────────────────────
+  async getHabitCorrelation(userId: string): Promise<HabitCorrelationPayload> {
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+    const [habits, tasks] = await Promise.all([
+      this.prisma.habit.findMany({
+        where: { userId },
+        select: { id: true, name: true, completedDays: true },
+      }),
+      this.prisma.task.findMany({
+        where: { userId, status: TaskStatus.DONE, completedAt: { gte: sixtyDaysAgo } },
+        select: { completedAt: true },
+      }),
+    ]);
+
+    // Build day → completedTaskCount map
+    const tasksByDay: Record<string, number> = {};
+    tasks.forEach((t) => {
+      if (!t.completedAt) return;
+      const day = t.completedAt.toISOString().slice(0, 10);
+      tasksByDay[day] = (tasksByDay[day] ?? 0) + 1;
+    });
+
+    // Build array of 60 dates
+    const dates: string[] = [];
+    for (let i = 59; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      dates.push(d.toISOString().slice(0, 10));
+    }
+
+    // Helper: Pearson r
+    function pearson(xs: number[], ys: number[]): number {
+      const n = xs.length;
+      if (n < 3) return 0;
+      const mx = xs.reduce((a, b) => a + b, 0) / n;
+      const my = ys.reduce((a, b) => a + b, 0) / n;
+      const num = xs.reduce((acc, x, i) => acc + (x - mx) * (ys[i] - my), 0);
+      const den = Math.sqrt(
+        xs.reduce((acc, x) => acc + (x - mx) ** 2, 0) *
+          ys.reduce((acc, y) => acc + (y - my) ** 2, 0),
+      );
+      return den === 0 ? 0 : num / den;
+    }
+
+    const correlations: HabitCorrelationPayload['correlations'] = [];
+
+    for (const habit of habits) {
+      const completedSet = new Set<string>(habit.completedDays as string[]);
+
+      // Pair: habitDone[i] → tasksCompleted[i+1] (next-day lagged correlation)
+      const xs: number[] = [];
+      const ys: number[] = [];
+      for (let i = 0; i < dates.length - 1; i++) {
+        const habitDone = completedSet.has(dates[i]) ? 1 : 0;
+        const nextDayTasks = tasksByDay[dates[i + 1]] ?? 0;
+        xs.push(habitDone);
+        ys.push(nextDayTasks);
+      }
+
+      // Only include habits with enough non-zero habit days (≥ 8)
+      const activeDays = xs.filter((x) => x === 1).length;
+      if (activeDays < 8) continue;
+
+      const r = pearson(xs, ys);
+      const rRounded = Math.round(r * 100) / 100;
+      const direction: 'positive' | 'negative' | 'neutral' =
+        r > 0.15 ? 'positive' : r < -0.15 ? 'negative' : 'neutral';
+
+      const interpretation =
+        direction === 'positive'
+          ? `Выполнение «${habit.name}» ассоциировано с ростом продуктивности на следующий день (+${Math.round(r * 100)}%).`
+          : direction === 'negative'
+          ? `«${habit.name}» негативно коррелирует с задачами следующего дня. Возможно, она отнимает когнитивный ресурс.`
+          : `«${habit.name}» не показывает значимой связи с продуктивностью.`;
+
+      correlations.push({
+        habitId: habit.id,
+        habitName: habit.name,
+        r: rRounded,
+        direction,
+        activeDays,
+        interpretation,
+      });
+    }
+
+    // Sort by |r| descending
+    correlations.sort((a, b) => Math.abs(b.r) - Math.abs(a.r));
+
+    const topPositive = correlations.filter((c) => c.direction === 'positive')[0] ?? null;
+    const summary =
+      correlations.length === 0
+        ? 'Недостаточно данных для корреляционного анализа (нужно ≥ 8 дней выполнения каждой привычки).'
+        : topPositive
+        ? `Самый сильный предиктор продуктивности: «${topPositive.habitName}» (r = ${topPositive.r}). Приоритизируйте её.`
+        : 'Значимых позитивных предикторов не обнаружено — попробуйте практиковать привычки регулярнее.';
+
+    return {
+      correlations,
+      summary,
+      modelFormula: 'r = Σ(Xi−X̄)(Yi+1−Ȳ) / √[Σ(Xi−X̄)²·Σ(Yi+1−Ȳ)²]  (Pearson, lag-1)',
+      dataWindowDays: 60,
+    };
+  }
 }
 
 export interface TrendsPayload {
@@ -1444,4 +1720,40 @@ export interface VelocityForecastPayload {
 
 function round1(value: number): number {
   return Math.round(value * 10) / 10;
+}
+
+// ─── Flow State / Focus Depth interfaces ──────────────────────────────────────
+export interface FocusDepthPayload {
+  flowStateScore: number; // 0–100
+  level: 'none' | 'distracted' | 'shallow' | 'flow' | 'deep-flow';
+  deepWorkIndex: number; // % of sessions ≥ 45 min
+  sessionConsistency: number; // % of days active in last 30
+  avgSessionMin: number;
+  longestStreakDays: number;
+  peakHourBlock: 'morning' | 'afternoon' | 'evening' | 'night' | null;
+  hourBlocks: {
+    label: string;
+    key: 'morning' | 'afternoon' | 'evening' | 'night';
+    count: number;
+    isPeak: boolean;
+  }[];
+  modelFormula: string;
+  insights: string[];
+}
+
+// ─── Habit–Task Pearson Correlation interfaces ─────────────────────────────────
+export interface HabitCorrelationItem {
+  habitId: string;
+  habitName: string;
+  r: number; // Pearson coefficient, –1 to 1
+  direction: 'positive' | 'negative' | 'neutral';
+  activeDays: number; // sample size
+  interpretation: string;
+}
+
+export interface HabitCorrelationPayload {
+  correlations: HabitCorrelationItem[];
+  summary: string;
+  modelFormula: string;
+  dataWindowDays: number;
 }
