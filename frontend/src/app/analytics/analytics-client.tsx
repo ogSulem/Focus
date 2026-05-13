@@ -6,6 +6,8 @@ import {
 } from 'recharts';
 import { YearlyHeatmap } from '@/components/yearly-heatmap';
 import { HabitStatsCard } from '@/components/habit-stats-card';
+import { ScenarioSimulatorCard } from '@/components/scenario-simulator-card';
+import type { ScenarioSimulatorPayload } from '@/lib/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface ProductivityPoint { date: string; completedTasksCount: number; totalTasksCount: number; }
@@ -157,7 +159,17 @@ function EmptyState() {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export function AnalyticsClient({ overview, apiUrl, token }: { overview: OverviewPayload | null; apiUrl?: string; token?: string }) {
+export function AnalyticsClient({
+  overview,
+  scenarioSimulator,
+  apiUrl,
+  token,
+}: {
+  overview: OverviewPayload | null;
+  scenarioSimulator?: ScenarioSimulatorPayload | null;
+  apiUrl?: string;
+  token?: string;
+}) {
   if (!overview) return <EmptyState />;
 
   const { summary, monthly, trends, activityBuckets, weekByDay, productivityScore } = overview;
@@ -324,7 +336,10 @@ export function AnalyticsClient({ overview, apiUrl, token }: { overview: Overvie
       {/* ── Row 5: Habit statistics ── */}
       <HabitStatsCard />
 
-      {/* ── Row 6: Activity heatmap ── */}
+      {/* ── Row 6: What-if scenario simulator ── */}
+      {scenarioSimulator && <ScenarioSimulatorCard scenarioSimulator={scenarioSimulator} />}
+
+      {/* ── Row 7: Activity heatmap ── */}
       {(apiUrl && token) && (
         <section className="card glow-card animate-slide-up stagger-5" style={{ padding: '22px', overflowX: 'auto' }}>
           <h2 style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: 2 }}>Активность за год</h2>

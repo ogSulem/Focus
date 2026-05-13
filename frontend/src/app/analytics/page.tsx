@@ -20,12 +20,24 @@ async function fetchOverview(token: string) {
   return res.json() as Promise<import('./analytics-client').OverviewPayload>;
 }
 
+async function fetchScenarioSimulator(token: string) {
+  const res = await fetch(`${API_URL}/analytics/scenario-simulator`, {
+    headers: { Authorization: `Bearer ${token}` },
+    next: { revalidate: 30 },
+  }).catch(() => null);
+  if (!res || !res.ok) return null;
+  return res.json() as Promise<import('@/lib/api').ScenarioSimulatorPayload>;
+}
+
 export default async function AnalyticsPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get('nt_access')?.value;
   if (!token) redirect('/login');
 
-  const overview = await fetchOverview(token);
+  const [overview, scenarioSimulator] = await Promise.all([
+    fetchOverview(token),
+    fetchScenarioSimulator(token),
+  ]);
 
   return (
     <div style={{ display: 'flex', minHeight: '100dvh', position: 'relative' }}>
@@ -60,7 +72,12 @@ export default async function AnalyticsPage() {
           </div>
         </header>
 
-        <AnalyticsClient overview={overview} apiUrl={process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'} token={token} />
+        <AnalyticsClient
+          overview={overview}
+          scenarioSimulator={scenarioSimulator}
+          apiUrl={process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}
+          token={token}
+        />
       </main>
     </div>
   );
