@@ -1832,9 +1832,9 @@ export class AnalyticsService {
 
     const bestScenario = scenarios[0];
     // Minimum observed days needed for medium confidence in 42-day window.
-    const CONFIDENCE_THRESHOLD_DAYS = 35;
+    const MIN_DAYS_FOR_MEDIUM_CONFIDENCE = 35;
     const confidence: ScenarioSimulatorPayload['confidence'] =
-      dayKeys.length >= CONFIDENCE_THRESHOLD_DAYS ? 'medium' : 'low';
+      dayKeys.length >= MIN_DAYS_FOR_MEDIUM_CONFIDENCE ? 'medium' : 'low';
 
     return {
       baseline: {
@@ -1848,7 +1848,7 @@ export class AnalyticsService {
       modelFormula:
         'ŷ_day = α + βf·focusMin + βh·habitCompletions;  βf=cov(focus,tasks)/var(focus), βh=cov(habits,tasks)/var(habits)',
       explanation:
-        'Симулятор оценивает эффект поведенческих изменений на недельную продуктивность по персональным данным последних 42 дней. Отрицательные эластичности обнуляются, так как сценарии моделируют только стратегии улучшения.',
+        'Симулятор оценивает эффект поведенческих изменений на недельную продуктивность по персональным данным последних 42 дней.',
     };
   }
 }
