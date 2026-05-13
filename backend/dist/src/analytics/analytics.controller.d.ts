@@ -1,5 +1,5 @@
 import type { JwtPayload } from '../auth/strategies/jwt.strategy';
-import { AnalyticsService, AnalyticsSummary, ArchetypePayload, BurnoutIndexPayload, FocusDepthPayload, HabitCorrelationPayload, HeatmapDay, IntelligencePayload, OverviewPayload, ProductivityPoint, RecommendationPayload, TrendsPayload, VelocityForecastPayload } from './analytics.service';
+import { AnalyticsService, AnalyticsSummary, ArchetypePayload, BurnoutIndexPayload, FocusDepthPayload, HabitCorrelationPayload, HeatmapDay, IntelligencePayload, OverviewPayload, ProductivityPoint, RecommendationPayload, ScenarioSimulatorPayload, TrendsPayload, VelocityForecastPayload } from './analytics.service';
 import { ExperimentReport } from '../events/events.service';
 export declare class AnalyticsController {
     private readonly analyticsService;
@@ -18,4 +18,5 @@ export declare class AnalyticsController {
     getVelocityForecast(user: JwtPayload): Promise<VelocityForecastPayload>;
     getFocusDepth(user: JwtPayload): Promise<FocusDepthPayload>;
     getHabitCorrelation(user: JwtPayload): Promise<HabitCorrelationPayload>;
+    getScenarioSimulator(user: JwtPayload): Promise<ScenarioSimulatorPayload>;
 }

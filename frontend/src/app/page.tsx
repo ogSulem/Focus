@@ -30,6 +30,7 @@ import { ArchetypeCard } from '@/components/archetype-card';
 import { VelocityForecastCard } from '@/components/velocity-forecast-card';
 import { FocusDepthCard } from '@/components/focus-depth-card';
 import { HabitCorrelationCard } from '@/components/habit-correlation-card';
+import { ScenarioSimulatorCard } from '@/components/scenario-simulator-card';
 
 export default async function Home() {
   // Read access token from the secure httpOnly cookie set by /api/auth/set
@@ -385,6 +386,9 @@ export default async function Home() {
 
         {/* ── Habit–Task Correlation ── */}
         <HabitCorrelationCard habitCorrelation={data.habitCorrelation} />
+
+        {/* ── What-if Scenario Simulator ── */}
+        <ScenarioSimulatorCard scenarioSimulator={data.scenarioSimulator} />
 
         {/* ── Achievements & Gamification ── */}
         <section id="ai-section" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr)', gap: 14, marginBottom: 14 }}>

@@ -178,6 +178,27 @@ export interface HabitCorrelationPayload {
   dataWindowDays: number;
 }
 
+export interface ScenarioResult {
+  key: 'focus-sprint' | 'habit-discipline' | 'hybrid-excellence';
+  title: string;
+  projectedCompletedTasksWeekly: number;
+  upliftPercent: number;
+  assumptions: string[];
+}
+
+export interface ScenarioSimulatorPayload {
+  baseline: {
+    completedTasksWeekly: number;
+    avgFocusMinPerDay: number;
+    avgHabitCompletionsPerDay: number;
+  };
+  scenarios: ScenarioResult[];
+  bestScenarioKey: ScenarioResult['key'] | null;
+  confidence: 'low' | 'medium' | 'high';
+  modelFormula: string;
+  explanation: string;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -199,6 +220,7 @@ export interface DashboardData {
   velocityForecast: VelocityForecastPayload;
   focusDepth: FocusDepthPayload;
   habitCorrelation: HabitCorrelationPayload;
+  scenarioSimulator: ScenarioSimulatorPayload;
   user?: UserProfile;
 }
 
@@ -518,6 +540,42 @@ const DEMO_DATA: DashboardData = {
     modelFormula: 'r = Σ(Xi−X̄)(Yi+1−Ȳ) / √[Σ(Xi−X̄)²·Σ(Yi+1−Ȳ)²]  (Pearson, lag-1)',
     dataWindowDays: 60,
   },
+  scenarioSimulator: {
+    baseline: {
+      completedTasksWeekly: 14,
+      avgFocusMinPerDay: 51,
+      avgHabitCompletionsPerDay: 1.4,
+    },
+    scenarios: [
+      {
+        key: 'focus-sprint',
+        title: 'Focus Sprint',
+        projectedCompletedTasksWeekly: 17,
+        upliftPercent: 21,
+        assumptions: ['+30 мин фокуса в день', '+0 привычек в день'],
+      },
+      {
+        key: 'habit-discipline',
+        title: 'Habit Discipline',
+        projectedCompletedTasksWeekly: 16,
+        upliftPercent: 14,
+        assumptions: ['+0 мин фокуса в день', '+1 привычка в день'],
+      },
+      {
+        key: 'hybrid-excellence',
+        title: 'Hybrid Excellence',
+        projectedCompletedTasksWeekly: 19,
+        upliftPercent: 36,
+        assumptions: ['+20 мин фокуса в день', '+1 привычка в день'],
+      },
+    ],
+    bestScenarioKey: 'hybrid-excellence',
+    confidence: 'medium',
+    modelFormula:
+      'ŷ_day = α + βf·focusMin + βh·habitCompletions;  βf=cov(focus,tasks)/var(focus), βh=cov(habits,tasks)/var(habits)',
+    explanation:
+      'Симулятор оценивает эффект изменений поведения на недельную продуктивность по персональным данным.',
+  },
 };
 
 export async function getDashboardData(token?: string): Promise<DashboardData> {
@@ -526,7 +584,7 @@ export async function getDashboardData(token?: string): Promise<DashboardData> {
   }
 
   try {
-    const [tasks, habits, weekly, recommendations, intelligence, experimentReport, burnout, archetype, velocityForecast, focusDepth, habitCorrelation, user] =
+    const [tasks, habits, weekly, recommendations, intelligence, experimentReport, burnout, archetype, velocityForecast, focusDepth, habitCorrelation, scenarioSimulator, user] =
       await Promise.all([
         apiFetch<Task[]>('/tasks', token),
         apiFetch<Habit[]>('/habits', token),
@@ -539,6 +597,7 @@ export async function getDashboardData(token?: string): Promise<DashboardData> {
         apiFetch<VelocityForecastPayload>('/analytics/velocity-forecast', token),
         apiFetch<FocusDepthPayload>('/analytics/focus-depth', token),
         apiFetch<HabitCorrelationPayload>('/analytics/habit-correlation', token),
+        apiFetch<ScenarioSimulatorPayload>('/analytics/scenario-simulator', token),
         apiFetch<UserProfile>('/users/me', token).catch(() => null),
       ]);
 
@@ -560,6 +619,7 @@ export async function getDashboardData(token?: string): Promise<DashboardData> {
       velocityForecast,
       focusDepth,
       habitCorrelation,
+      scenarioSimulator,
       user: user ?? undefined,
     };
   } catch {

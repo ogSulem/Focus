@@ -1165,6 +1165,142 @@ let AnalyticsService = class AnalyticsService {
             dataWindowDays: 60,
         };
     }
+    async getScenarioSimulator(userId) {
+        const now = new Date();
+        const start = new Date(now);
+        start.setDate(start.getDate() - 42);
+        start.setHours(0, 0, 0, 0);
+        const [tasks, sessions, habits] = await Promise.all([
+            this.prisma.task.findMany({
+                where: {
+                    userId,
+                    status: client_1.TaskStatus.DONE,
+                    completedAt: { gte: start },
+                },
+                select: { completedAt: true },
+            }),
+            this.prisma.focusSession.findMany({
+                where: {
+                    userId,
+                    phase: 'focus',
+                    completedAt: { gte: start },
+                },
+                select: { completedAt: true, durationMin: true },
+            }),
+            this.prisma.habit.findMany({
+                where: { userId },
+                select: { completedDays: true },
+            }),
+        ]);
+        const dayKeys = [];
+        for (let i = 41; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            dayKeys.push(d.toISOString().slice(0, 10));
+        }
+        const tasksByDay = {};
+        tasks.forEach((t) => {
+            if (!t.completedAt)
+                return;
+            const day = t.completedAt.toISOString().slice(0, 10);
+            tasksByDay[day] = (tasksByDay[day] ?? 0) + 1;
+        });
+        const focusByDay = {};
+        sessions.forEach((s) => {
+            const day = s.completedAt.toISOString().slice(0, 10);
+            focusByDay[day] = (focusByDay[day] ?? 0) + s.durationMin;
+        });
+        const habitByDay = {};
+        habits.forEach((h) => {
+            if (!Array.isArray(h.completedDays))
+                return;
+            h.completedDays.forEach((raw) => {
+                if (typeof raw !== 'string')
+                    return;
+                if (!dayKeys.includes(raw))
+                    return;
+                habitByDay[raw] = (habitByDay[raw] ?? 0) + 1;
+            });
+        });
+        const y = dayKeys.map((d) => tasksByDay[d] ?? 0);
+        const xf = dayKeys.map((d) => focusByDay[d] ?? 0);
+        const xh = dayKeys.map((d) => habitByDay[d] ?? 0);
+        const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+        const variance = (arr) => {
+            const m = avg(arr);
+            return arr.length
+                ? arr.reduce((acc, v) => acc + (v - m) ** 2, 0) / arr.length
+                : 0;
+        };
+        const covariance = (a, b) => {
+            const ma = avg(a);
+            const mb = avg(b);
+            if (!a.length || a.length !== b.length)
+                return 0;
+            return (a.reduce((acc, v, i) => acc + (v - ma) * (b[i] - mb), 0) / a.length);
+        };
+        const focusVar = variance(xf);
+        const habitVar = variance(xh);
+        const betaFocus = focusVar > 0 ? covariance(xf, y) / focusVar : 0;
+        const betaHabit = habitVar > 0 ? covariance(xh, y) / habitVar : 0;
+        const recentDays = dayKeys.slice(-14);
+        const baselineWeekly = Math.max(0, Math.round(recentDays.reduce((acc, d) => acc + (tasksByDay[d] ?? 0), 0) / 2));
+        const scenariosInput = [
+            {
+                key: 'focus-sprint',
+                title: 'Focus Sprint',
+                focusDeltaMinPerDay: 30,
+                habitDeltaPerDay: 0,
+            },
+            {
+                key: 'habit-discipline',
+                title: 'Habit Discipline',
+                focusDeltaMinPerDay: 0,
+                habitDeltaPerDay: 1,
+            },
+            {
+                key: 'hybrid-excellence',
+                title: 'Hybrid Excellence',
+                focusDeltaMinPerDay: 20,
+                habitDeltaPerDay: 1,
+            },
+        ];
+        const scenarios = scenariosInput.map((s) => {
+            const deltaPerDay = betaFocus * s.focusDeltaMinPerDay + betaHabit * s.habitDeltaPerDay;
+            const deltaWeekly = Math.round(deltaPerDay * 7);
+            const projectedWeekly = Math.max(0, baselineWeekly + deltaWeekly);
+            const upliftPercent = baselineWeekly > 0
+                ? Math.round((deltaWeekly / baselineWeekly) * 100)
+                : deltaWeekly > 0
+                    ? 100
+                    : 0;
+            return {
+                key: s.key,
+                title: s.title,
+                projectedCompletedTasksWeekly: projectedWeekly,
+                upliftPercent,
+                assumptions: [
+                    `+${s.focusDeltaMinPerDay} мин фокуса в день`,
+                    `+${s.habitDeltaPerDay} привычек в день`,
+                ],
+            };
+        });
+        scenarios.sort((a, b) => b.projectedCompletedTasksWeekly - a.projectedCompletedTasksWeekly);
+        const bestScenario = scenarios[0];
+        const confidence = dayKeys.length >= 35 ? 'medium' : 'low';
+        return {
+            baseline: {
+                completedTasksWeekly: baselineWeekly,
+                avgFocusMinPerDay: Math.round(avg(xf)),
+                avgHabitCompletionsPerDay: round1(avg(xh)),
+            },
+            scenarios,
+            bestScenarioKey: bestScenario?.key ?? null,
+            confidence,
+            modelFormula: 'ŷ_day = α + βf·focusMin + βh·habitCompletions;  βf=cov(focus,tasks)/var(focus), βh=cov(habits,tasks)/var(habits)',
+            explanation: 'Симулятор оценивает эффект поведенческих изменений на недельную продуктивность по персональным данным последних 42 дней.',
+        };
+    }
 };
 exports.AnalyticsService = AnalyticsService;
 exports.AnalyticsService = AnalyticsService = __decorate([

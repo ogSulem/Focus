@@ -65,6 +65,9 @@ let AnalyticsController = class AnalyticsController {
     getHabitCorrelation(user) {
         return this.analyticsService.getHabitCorrelation(user.sub);
     }
+    getScenarioSimulator(user) {
+        return this.analyticsService.getScenarioSimulator(user.sub);
+    }
 };
 exports.AnalyticsController = AnalyticsController;
 __decorate([
@@ -203,6 +206,16 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getHabitCorrelation", null);
+__decorate([
+    (0, common_1.Get)('scenario-simulator'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'What-if simulator: predicts weekly productivity impact from focus/habit behavior scenarios',
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getScenarioSimulator", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, swagger_1.ApiTags)('analytics'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

@@ -15,6 +15,7 @@ import {
   OverviewPayload,
   ProductivityPoint,
   RecommendationPayload,
+  ScenarioSimulatorPayload,
   TrendsPayload,
   VelocityForecastPayload,
 } from './analytics.service';
@@ -152,5 +153,16 @@ export class AnalyticsController {
     @CurrentUser() user: JwtPayload,
   ): Promise<HabitCorrelationPayload> {
     return this.analyticsService.getHabitCorrelation(user.sub);
+  }
+
+  @Get('scenario-simulator')
+  @ApiOperation({
+    summary:
+      'What-if simulator: predicts weekly productivity impact from focus/habit behavior scenarios',
+  })
+  getScenarioSimulator(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<ScenarioSimulatorPayload> {
+    return this.analyticsService.getScenarioSimulator(user.sub);
   }
 }

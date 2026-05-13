@@ -105,6 +105,7 @@ export declare class AnalyticsService {
     getVelocityForecast(userId: string): Promise<VelocityForecastPayload>;
     getFocusDepth(userId: string): Promise<FocusDepthPayload>;
     getHabitCorrelation(userId: string): Promise<HabitCorrelationPayload>;
+    getScenarioSimulator(userId: string): Promise<ScenarioSimulatorPayload>;
 }
 export interface TrendsPayload {
     completedTasks: {
@@ -215,4 +216,23 @@ export interface HabitCorrelationPayload {
     summary: string;
     modelFormula: string;
     dataWindowDays: number;
+}
+export interface ScenarioResult {
+    key: 'focus-sprint' | 'habit-discipline' | 'hybrid-excellence';
+    title: string;
+    projectedCompletedTasksWeekly: number;
+    upliftPercent: number;
+    assumptions: string[];
+}
+export interface ScenarioSimulatorPayload {
+    baseline: {
+        completedTasksWeekly: number;
+        avgFocusMinPerDay: number;
+        avgHabitCompletionsPerDay: number;
+    };
+    scenarios: ScenarioResult[];
+    bestScenarioKey: ScenarioResult['key'] | null;
+    confidence: 'low' | 'medium' | 'high';
+    modelFormula: string;
+    explanation: string;
 }
