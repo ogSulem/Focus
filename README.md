@@ -158,6 +158,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3001/api npm run dev
 - **Stat Cards** — KPI-виджеты с glow orb и stagger-анимацией + sparkline
 - **Area Chart** — gradient fill, кастомный tooltip (Recharts)
 - **Donut Charts** — распределение по статусу и приоритету
+- **Task Deadline Calendar** — месячный heat-calendar дедлайнов с плотностью нагрузки по дням
 - **Activity Heatmap** — GitHub-style grid (18 недель) для каждой привычки
 - **Yearly Heatmap** — полугодовая тепловая карта продуктивности
 - **Weekly Trends** — неделя-к-неделе сравнение
@@ -190,6 +191,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3001/api npm run dev
 - **Before/After метрики** по окну 14 дней (7 + 7): completed tasks, completion rate, overdue, habit completions, focus minutes
 - **Экспериментальный блок на дашборде** с измеримым эффектом внедрения интеллектуального модуля
 - **Формулы модели и explainability** показываются в UI (Intelligence card) на основе `modelMeta` для прозрачности и обоснования методики в ВКР
+- **Diploma Compliance Matrix** — визуальный чеклист покрытия ключевых требований ТЗ/методических указаний прямо в интерфейсе
 
 ### ⚙️ Настройки
 - **Profile Settings** — обновление имени пользователя

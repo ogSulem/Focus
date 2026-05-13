@@ -31,6 +31,8 @@ import { VelocityForecastCard } from '@/components/velocity-forecast-card';
 import { FocusDepthCard } from '@/components/focus-depth-card';
 import { HabitCorrelationCard } from '@/components/habit-correlation-card';
 import { ScenarioSimulatorCard } from '@/components/scenario-simulator-card';
+import { TaskDeadlineCalendar } from '@/components/task-deadline-calendar';
+import { DiplomaComplianceCard } from '@/components/diploma-compliance-card';
 
 export default async function Home() {
   // Read access token from the secure httpOnly cookie set by /api/auth/set
@@ -315,6 +317,12 @@ export default async function Home() {
 
         {/* ── Upcoming Deadlines ── */}
         <UpcomingDeadlinesWidget apiUrl={apiUrl} token={token} />
+
+        {/* ── Deadline Calendar (new) ── */}
+        <TaskDeadlineCalendar tasks={data.tasks} />
+
+        {/* ── Diploma Compliance Matrix (new) ── */}
+        <DiplomaComplianceCard />
 
         {/* ── Tasks + Habits ── */}
         <section id="tasks-section" className="dashboard-grid-equal">
