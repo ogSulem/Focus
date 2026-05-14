@@ -66,7 +66,7 @@ function GoalsIcon() {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/',          label: 'Главная',   icon: <HomeIcon />,     exact: true },
+  { href: '/dashboard', label: 'Главная',   icon: <HomeIcon />,     exact: true },
   { href: '/kanban',    label: 'Kanban',    icon: <KanbanIcon /> },
   { href: '/analytics', label: 'Аналитика', icon: <AnalyticsIcon /> },
   { href: '/focus',     label: 'Фокус',     icon: <FocusIcon /> },
@@ -76,6 +76,8 @@ const NAV_ITEMS: NavItem[] = [
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+
+  if (pathname === '/' || pathname === '/login') return null;
 
   return (
     <nav

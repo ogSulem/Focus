@@ -173,7 +173,7 @@ export function FocusModeClient({ tasks, apiUrl, token }: FocusModeClientProps) 
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       if (e.key === ' ') { e.preventDefault(); setRunning((r) => !r); }
       if (e.key === 'r' || e.key === 'R') { stopInterval(); setRunning(false); setTimeLeft(phaseSecs[phase]); }
-      if (e.key === 'Escape') router.push('/');
+      if (e.key === 'Escape') router.push('/dashboard');
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -257,7 +257,7 @@ export function FocusModeClient({ tasks, apiUrl, token }: FocusModeClientProps) 
         background: 'linear-gradient(to bottom, var(--bg-base) 0%, transparent 100%)',
       }}>
         <button
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/dashboard')}
           className="btn btn-ghost"
           style={{ gap: 6, fontSize: '0.8rem', padding: '7px 14px' }}
         >
