@@ -236,6 +236,33 @@ Habitica геймифицирует трекинг привычек и зада�
 
 НФТ-5. Кодовая база должна проходить статический анализ (lint) и автоматическую сборку без ошибок.
 
+Совокупность функциональных сценариев системы NeuroTrack, соответствующих сформированным требованиям, представлена на рисунке 1.1 в виде диаграммы вариантов использования.
+
+```mermaid
+flowchart LR
+    U([Пользователь]) --> UC1[Аутентификация]
+    U --> UC2[Управление задачами]
+    U --> UC3[Трекинг привычек]
+    U --> UC4[Просмотр аналитики]
+    U --> UC5[Управление целями]
+    U --> UC6[Заметки]
+    U --> UC7[Режим концентрации]
+    U --> UC8[Экспорт данных]
+    U --> UC9[Telegram-интеграция]
+    UC2 --> UC2a[CRUD задачи]
+    UC2 --> UC2b[Kanban-доска]
+    UC2 --> UC2c[Фильтрация / поиск]
+    UC2 --> UC8
+    UC3 --> UC3a[Фиксация выполнения]
+    UC3 --> UC3b[Просмотр streak]
+    UC4 --> UC4a[Heatmap активности]
+    UC4 --> UC4b[Тренды недели / месяца]
+    UC4 --> UC4c[AI-рекомендации]
+    UC4c --> UC4d[Сигналы риска дедлайнов]
+```
+
+Рисунок 1.1. Диаграмма вариантов использования системы NeuroTrack
+
 ## 1.5 Постановка задачи ВКР
 
 На основе проведенного анализа задача ВКР формулируется следующим образом: необходимо спроектировать и реализовать интеллектуальную веб-систему NeuroTrack, обеспечивающую единый программный контур персонального планирования, трекинга привычек и объяснимой аналитики продуктивности.
@@ -321,49 +348,74 @@ Backend-часть реализует паттерн «модульная мон
 
 ## 2.3 Проектирование модели данных
 
-Реляционная модель данных разрабатывалась из принципов минимальной избыточности, корректной нормализации (3НФ) и возможности эффективной аналитической агрегации. Концептуальная ER-структура предметной области приведена на рисунке 2.2.
+Реляционная модель данных разрабатывалась из принципов минимальной избыточности, корректной нормализации (3НФ) и возможности эффективной аналитической агрегации. Модель включает 8 сущностей: User, Task, Habit, Note, Goal, FocusSession, ProductivityLog и UserEvent. Полная ER-диаграмма, отражающая все сущности и их связи, приведена на рисунке 2.2.
 
-В таблице 2.2 описаны ключевые сущности модели данных с указанием атрибутов и их типов.
+В таблице 2.2 описаны все сущности модели данных с указанием атрибутов и их типов.
 
 Таблица 2.2. Описание сущностей модели данных
 
 | Сущность | Атрибут | Тип | Описание |
 |---|---|---|---|
-| User | id | UUID | Первичный ключ |
+| User | id | String (PK) | Первичный ключ (CUID) |
 | User | email | String (unique) | Электронная почта |
-| User | passwordHash | String | Bcrypt-хеш пароля |
+| User | passwordHash | String | Bcrypt-хеш пароля (cost factor 12) |
+| User | refreshTokenHash | String? | Хеш refresh-токена (хранится на уровне записи пользователя) |
 | User | name | String? | Имя пользователя |
-| User | timezone | String | Часовой пояс для корректной аналитики |
 | User | createdAt | DateTime | Дата регистрации |
-| Task | id | UUID | Первичный ключ |
-| Task | userId | UUID (FK) | Связь с пользователем |
+| Task | id | String (PK) | Первичный ключ (CUID) |
+| Task | userId | String (FK) | Связь с пользователем |
 | Task | title | String | Заголовок задачи |
 | Task | description | String? | Описание |
 | Task | priority | Enum | LOW / MEDIUM / HIGH |
 | Task | status | Enum | TODO / IN\_PROGRESS / DONE |
 | Task | deadline | DateTime? | Дедлайн |
 | Task | tags | String[] | Массив тегов |
+| Task | subtasks | JSON | Подзадачи в формате JSON |
 | Task | completedAt | DateTime? | Время завершения |
 | Task | createdAt | DateTime | Время создания |
-| Habit | id | UUID | Первичный ключ |
-| Habit | userId | UUID (FK) | Связь с пользователем |
+| Habit | id | String (PK) | Первичный ключ (CUID) |
+| Habit | userId | String (FK) | Связь с пользователем |
 | Habit | name | String | Название привычки |
-| Habit | description | String? | Описание |
-| Habit | frequency | Enum | DAILY / WEEKLY |
 | Habit | streak | Int | Текущая серия выполнений |
-| Habit | longestStreak | Int | Максимальная серия |
-| Habit | completedDays | DateTime[] | Дни выполнения |
+| Habit | completedDays | JSON | Массив дат выполнения |
 | Habit | createdAt | DateTime | Дата создания |
-| UserEvent | id | UUID | Первичный ключ |
-| UserEvent | userId | UUID (FK) | Связь с пользователем |
-| UserEvent | type | Enum | Тип события (TASK\_DONE, HABIT\_DONE и др.) |
-| UserEvent | payload | JSON | Дополнительные данные события |
+| Note | id | String (PK) | Первичный ключ (CUID) |
+| Note | userId | String (FK) | Связь с пользователем |
+| Note | title | String | Заголовок заметки |
+| Note | content | String | Текст заметки (Markdown) |
+| Note | mood | String? | Настроение / эмодзи-метка |
+| Note | color | String | Цвет карточки (HEX) |
+| Note | pinned | Boolean | Признак закреплённой заметки |
+| Note | tags | String[] | Массив тегов |
+| Note | createdAt | DateTime | Дата создания |
+| Goal | id | String (PK) | Первичный ключ (CUID) |
+| Goal | userId | String (FK) | Связь с пользователем |
+| Goal | title | String | Название цели |
+| Goal | category | String | Категория (personal / work / health и др.) |
+| Goal | target | Float | Целевое значение |
+| Goal | current | Float | Текущий прогресс |
+| Goal | unit | String | Единица измерения (%, задача, км и др.) |
+| Goal | deadline | DateTime? | Срок достижения |
+| Goal | completed | Boolean | Признак завершения |
+| Goal | color | String | Цвет визуализации |
+| Goal | createdAt | DateTime | Дата создания |
+| FocusSession | id | String (PK) | Первичный ключ (CUID) |
+| FocusSession | userId | String (FK) | Связь с пользователем |
+| FocusSession | phase | String | Фаза (focus / short\_break / long\_break) |
+| FocusSession | taskTitle | String? | Название задачи в сессии |
+| FocusSession | durationMin | Int | Длительность сессии (мин) |
+| FocusSession | completedAt | DateTime | Время завершения сессии |
+| ProductivityLog | id | String (PK) | Первичный ключ (CUID) |
+| ProductivityLog | userId | String (FK) | Связь с пользователем |
+| ProductivityLog | date | DateTime | Дата записи (один лог на день на пользователя) |
+| ProductivityLog | completedTasksCount | Int | Количество выполненных задач за день |
+| ProductivityLog | activeMinutes | Int | Минуты активной работы (фокус-сессии) |
+| ProductivityLog | createdAt | DateTime | Дата создания |
+| UserEvent | id | String (PK) | Первичный ключ (CUID) |
+| UserEvent | userId | String (FK) | Связь с пользователем |
+| UserEvent | type | Enum | Тип события: TASK\_CREATED, TASK\_COMPLETED, HABIT\_TRACKED, FOCUS\_SESSION\_COMPLETED и др. |
+| UserEvent | payload | JSON | Контекстные данные события |
 | UserEvent | occurredAt | DateTime | Время события |
-| RefreshToken | id | UUID | Первичный ключ |
-| RefreshToken | userId | UUID (FK) | Связь с пользователем |
-| RefreshToken | token | String (unique) | Хеш токена |
-| RefreshToken | expiresAt | DateTime | Срок действия |
-| RefreshToken | createdAt | DateTime | Дата создания |
 
 Связи между сущностями реализуют паттерн «один ко многим»: один пользователь владеет множеством задач, привычек, событий и токенов обновления. Каскадное удаление настроено на уровне Prisma-схемы: при удалении пользователя автоматически удаляются все связанные записи.
 
@@ -374,27 +426,91 @@ Backend-часть реализует паттерн «модульная мон
 
 ```mermaid
 erDiagram
-    USER ||--o{ TASK : creates
-    USER ||--o{ HABIT : tracks
-    USER ||--o{ USEREVENT : generates
-    USER ||--o{ REFRESHTOKEN : owns
+    USER ||--o{ TASK : "создаёт"
+    USER ||--o{ HABIT : "отслеживает"
+    USER ||--o{ NOTE : "ведёт"
+    USER ||--o{ GOAL : "ставит"
+    USER ||--o{ FOCUSSESSION : "проводит"
+    USER ||--o{ PRODUCTIVITYLOG : "накапливает"
+    USER ||--o{ USEREVENT : "генерирует"
+
+    USER {
+        string id PK
+        string email
+        string name
+        string passwordHash
+        string refreshTokenHash
+        datetime createdAt
+    }
     TASK {
-      UUID id
-      UUID userId
-      STRING title
-      STRING status
+        string id PK
+        string userId FK
+        string title
+        enum priority
+        enum status
+        datetime deadline
+        json tags
+        json subtasks
     }
     HABIT {
-      UUID id
-      UUID userId
-      STRING name
-      INT streak
+        string id PK
+        string userId FK
+        string name
+        int streak
+        json completedDays
+    }
+    NOTE {
+        string id PK
+        string userId FK
+        string title
+        string content
+        string mood
+        boolean pinned
+        json tags
+    }
+    GOAL {
+        string id PK
+        string userId FK
+        string title
+        string category
+        float target
+        float current
+        boolean completed
+    }
+    FOCUSSESSION {
+        string id PK
+        string userId FK
+        string phase
+        string taskTitle
+        int durationMin
+        datetime completedAt
+    }
+    PRODUCTIVITYLOG {
+        string id PK
+        string userId FK
+        datetime date
+        int completedTasksCount
+        int activeMinutes
+    }
+    USEREVENT {
+        string id PK
+        string userId FK
+        enum type
+        json payload
+        datetime occurredAt
     }
 ```
 
-Рисунок 2.2. Концептуальная ER-диаграмма ключевых сущностей NeuroTrack
+Рисунок 2.2. ER-диаграмма модели данных системы NeuroTrack (8 сущностей)
 
-## 2.4 Реализация backend-компонента системы
+Связи между сущностями реализуют паттерн «один ко многим»: один пользователь владеет множеством задач, привычек, заметок, целей, фокус-сессий и событий. Каскадное удаление настроено на уровне Prisma-схемы: при удалении пользователя автоматически удаляются все связанные записи.
+
+Индексная стратегия включает:
+- составной индекс `(userId, status)` в таблице Task для оптимизации фильтрации по статусу;
+- составной индекс `(userId, date)` в таблице ProductivityLog для быстрых временных агрегаций;
+- индекс по `userId` во всех пользовательских таблицах для оптимизации выборок;
+- индекс по `(userId, pinned)` в таблице Note для быстрого доступа к закреплённым заметкам;
+- индекс по `deadline` в таблице Task для запросов ближайших дедлайнов.
 
 Backend реализован на NestJS и организован в 10 функциональных модулей: Auth, Users, Tasks, Habits, Analytics, Events, Goals, Notes, FocusSessions и Telegram.
 
@@ -503,6 +619,34 @@ Frontend-приложение реализовано на Next.js с испол�
 9. /notes — быстрые заметки.
 10. /settings — настройки профиля, темы, уведомлений.
 
+Структура маршрутов и логика навигации между экранами представлены на рисунке 2.4.
+
+```mermaid
+flowchart TD
+    LOGIN["/login\nВход / Регистрация"]
+    DASH["/dashboard\nДашборд"]
+    TASKS["/tasks\nСписок задач"]
+    KANBAN["/kanban\nKanban-доска"]
+    HABITS["/habits\nПривычки"]
+    ANALYTICS["/analytics\nАналитика"]
+    GOALS["/goals\nЦели"]
+    FOCUS["/focus\nPomodoro-таймер"]
+    NOTES["/notes\nЗаметки"]
+    SETTINGS["/settings\nНастройки"]
+
+    LOGIN --> DASH
+    DASH --> TASKS
+    DASH --> HABITS
+    DASH --> ANALYTICS
+    DASH --> GOALS
+    DASH --> FOCUS
+    DASH --> NOTES
+    DASH --> SETTINGS
+    TASKS --> KANBAN
+```
+
+Рисунок 2.4. Схема маршрутов frontend-приложения NeuroTrack
+
 Компонентная архитектура Frontend разделена на три уровня:
 - страницы (Page components) — маршрутные компоненты, оркестрирующие загрузку данных;
 - составные компоненты (Compound components) — функциональные блоки (TaskCard, HabitRow, AnalyticsChart);
@@ -561,7 +705,7 @@ ProductivityScore = w1 * TaskCompletionRate + w2 * HabitStability + w3 * Deadlin
 
 Выбор rule-based подхода обеспечивает полную воспроизводимость результатов: одни и те же входные данные всегда порождают одни и те же рекомендации, что критически важно для отладки и верификации системы в рамках ВКР.
 
-Последовательность формирования рекомендаций для пользовательского запроса показана на рисунке 2.4.
+Последовательность формирования рекомендаций для пользовательского запроса показана на рисунке 2.5.
 
 ```mermaid
 sequenceDiagram
@@ -580,7 +724,7 @@ sequenceDiagram
     FE-->>U: Карточки рекомендаций
 ```
 
-Рисунок 2.4. Диаграмма последовательности формирования рекомендаций
+Рисунок 2.5. Диаграмма последовательности формирования рекомендаций
 
 ## 2.7 Обеспечение безопасности и защиты данных
 
@@ -616,7 +760,7 @@ sequenceDiagram
 
 ## 3.1 Методика оценки качества программного продукта
 
-Оценка качества программного продукта проводилась в соответствии с принципами ISO/IEC 25010 (SQuaRE) [3], адаптированными к масштабу работы. На рисунках 2.1–2.4 представлены ключевые графические материалы проекта (архитектурная схема, ER-диаграмма, модульная декомпозиция backend и диаграмма последовательности), используемые для верификации проектных решений. Оценочные критерии сгруппированы в четыре категории.
+Оценка качества программного продукта проводилась в соответствии с принципами ISO/IEC 25010 (SQuaRE) [3], адаптированными к масштабу работы. На рисунках 1.1 и 2.1–2.5 представлены ключевые графические материалы проекта (диаграмма вариантов использования, архитектурная схема, ER-диаграмма, модульная декомпозиция backend, схема маршрутов frontend и диаграмма последовательности), используемые для верификации проектных решений. Оценочные критерии сгруппированы в четыре категории.
 
 1. Функциональная пригодность — степень соответствия реализованных функций перечню требований ФТ-1 — ФТ-9.
 
@@ -720,7 +864,7 @@ sequenceDiagram
 
 По задаче 3. Сформированы 9 функциональных и 5 нефункциональных требований к системе, обеспечивающих полноту и операциональность разработки.
 
-По задаче 4. Спроектирована клиент-серверная архитектура с разделением на 10 функциональных NestJS-модулей, разработана нормализованная реляционная модель данных на основе ключевых пользовательских сущностей и событийного контура.
+По задаче 4. Спроектирована клиент-серверная архитектура с разделением на 10 функциональных NestJS-модулей, разработана нормализованная реляционная модель данных на основе 8 доменных сущностей (User, Task, Habit, Note, Goal, FocusSession, ProductivityLog, UserEvent). Подготовлен комплект из 5 графических материалов: диаграмма вариантов использования (рисунок 1.1), архитектурная схема (рисунок 2.1), ER-диаграмма (рисунок 2.2), модульная структура backend (рисунок 2.3), схема маршрутов frontend (рисунок 2.4), диаграмма последовательности (рисунок 2.5).
 
 По задаче 5. Реализованы backend REST API с более чем 30 задокументированными endpoint-ами, frontend-приложение на Next.js с 10 экранами и системой визуализации данных.
 
