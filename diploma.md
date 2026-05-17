@@ -535,7 +535,7 @@ Backend реализован на NestJS и организован в 10 фун�
 
 Модуль Habits реализует управление привычками:
 - CRUD для сущности Habit;
-- POST /habits/:id/complete — фиксация выполнения привычки за день с автоматическим пересчетом streak;
+- PATCH /habits/:id/track — фиксация выполнения привычки за день с автоматическим пересчетом streak;
 - GET /habits/stats — агрегированная статистика по всем привычкам.
 
 Модуль Analytics предоставляет аналитические и прогностические данные:
@@ -594,7 +594,7 @@ flowchart TB
 | /tasks/upcoming | GET | Bearer | Задачи с дедлайном 24ч | 200 OK |
 | /tasks/export | GET | Bearer | Экспорт задач (JSON/CSV) | 200 OK |
 | /habits | GET | Bearer | Список привычек | 200 OK |
-| /habits/:id/complete | POST | Bearer | Фиксация выполнения | 200 OK |
+| /habits/:id/track | PATCH | Bearer | Фиксация выполнения | 200 OK |
 | /habits/stats | GET | Bearer | Статистика привычек | 200 OK |
 | /analytics/overview | GET | Bearer | Сводная аналитика | 200 OK |
 | /analytics/heatmap | GET | Bearer | Тепловая карта | 200 OK |
@@ -613,7 +613,7 @@ flowchart TB
 | /focus-sessions | GET | Bearer | История фокус-сессий | 200 OK |
 | /focus-sessions | POST | Bearer | Сохранение фокус-сессии | 201 Created |
 | /events | GET | Bearer | Лента событий пользователя | 200 OK |
-| /analytics/intelligence | GET | Bearer | Адаптивная аналитика | 200 OK |
+| /analytics/scenario-simulator | GET | Bearer | What-if моделирование продуктивности | 200 OK |
 
 Все endpoint-ы задокументированы через Swagger/OpenAPI с использованием NestJS-декораторов @ApiOperation, @ApiResponse и @ApiBearerAuth [16].
 
@@ -1016,7 +1016,7 @@ flowchart TD
 | № | Сценарий | Участник | Предусловие | Ожидаемый результат |
 |---|---|---|---|---|
 | 1 | Регистрация нового пользователя | Анонимный пользователь | Открыта страница /login | Учетная запись создана, выполнен вход, выдан JWT |
-| 2 | Создание задачи с дедлайном | Авторизованный пользователь | Открыта страница /tasks | Задача создана, отображается в списке |
+| 2 | Создание задачи с дедлайном | Авторизованный пользователь | Открыта страница /dashboard | Задача создана, отображается в списке и аналитике |
 | 3 | Изменение статуса задачи | Авторизованный пользователь | Задача существует со статусом TODO | Статус обновлен, событие UserEvent зафиксировано |
 | 4 | Фиксация выполнения привычки | Авторизованный пользователь | Привычка создана | Streak увеличен на 1, прогресс обновлен |
 | 5 | Просмотр недельной аналитики | Авторизованный пользователь | Есть данные за период | График и метрики отображены корректно |
@@ -1033,7 +1033,7 @@ flowchart TD
 | Аутентификация | /auth | register, login, refresh, logout |
 | Пользователи | /users | me, me (patch), me/password, me/stats |
 | Задачи | /tasks | CRUD, upcoming, export, stats |
-| Привычки | /habits | CRUD, complete, stats |
+| Привычки | /habits | CRUD, track/untrack, stats |
 | Аналитика | /analytics | overview, weekly, monthly, heatmap, recommendations, intelligence, burnout-index, archetype, velocity-forecast, focus-depth, habit-correlation, scenario-simulator |
 | Цели | /goals | CRUD, прогресс, завершение |
 | Заметки | /notes | CRUD, поиск |
