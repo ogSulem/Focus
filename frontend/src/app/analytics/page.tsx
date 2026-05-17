@@ -3,6 +3,16 @@ import { redirect } from 'next/navigation';
 import { Sidebar } from '@/components/sidebar';
 import { ToastProvider } from '@/components/toast';
 import { AnalyticsClient } from './analytics-client';
+import type {
+  ArchetypePayload,
+  BurnoutIndexPayload,
+  ExperimentReport,
+  FocusDepthPayload,
+  HabitCorrelationPayload,
+  IntelligencePayload,
+  ScenarioSimulatorPayload,
+  VelocityForecastPayload,
+} from '@/lib/api';
 
 export const metadata = { title: 'Analytics — NeuroTrack' };
 
@@ -11,13 +21,13 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
   'http://localhost:3001/api';
 
-async function fetchOverview(token: string) {
-  const res = await fetch(`${API_URL}/analytics/overview`, {
+async function fetchJson<T>(token: string, path: string): Promise<T | null> {
+  const res = await fetch(`${API_URL}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
     next: { revalidate: 30 },
   }).catch(() => null);
   if (!res || !res.ok) return null;
-  return res.json() as Promise<import('./analytics-client').OverviewPayload>;
+  return res.json() as Promise<T>;
 }
 
 export default async function AnalyticsPage() {
@@ -25,7 +35,17 @@ export default async function AnalyticsPage() {
   const token = cookieStore.get('nt_access')?.value;
   if (!token) redirect('/login');
 
-  const overview = await fetchOverview(token);
+  const [overview, scenarioSimulator, intelligence, experimentReport, burnout, archetype, velocityForecast, focusDepth, habitCorrelation] = await Promise.all([
+    fetchJson<import('./analytics-client').OverviewPayload>(token, '/analytics/overview'),
+    fetchJson<ScenarioSimulatorPayload>(token, '/analytics/scenario-simulator'),
+    fetchJson<IntelligencePayload>(token, '/analytics/intelligence?energy=medium'),
+    fetchJson<ExperimentReport>(token, '/analytics/experiment-report'),
+    fetchJson<BurnoutIndexPayload>(token, '/analytics/burnout-risk'),
+    fetchJson<ArchetypePayload>(token, '/analytics/productivity-archetype'),
+    fetchJson<VelocityForecastPayload>(token, '/analytics/velocity-forecast'),
+    fetchJson<FocusDepthPayload>(token, '/analytics/focus-depth'),
+    fetchJson<HabitCorrelationPayload>(token, '/analytics/habit-task-correlation'),
+  ]);
 
   return (
     <div style={{ display: 'flex', minHeight: '100dvh', position: 'relative' }}>
@@ -60,7 +80,19 @@ export default async function AnalyticsPage() {
           </div>
         </header>
 
-        <AnalyticsClient overview={overview} apiUrl={process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'} token={token} />
+        <AnalyticsClient
+          overview={overview}
+          scenarioSimulator={scenarioSimulator}
+          intelligence={intelligence}
+          experimentReport={experimentReport}
+          burnout={burnout}
+          archetype={archetype}
+          velocityForecast={velocityForecast}
+          focusDepth={focusDepth}
+          habitCorrelation={habitCorrelation}
+          apiUrl={process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}
+          token={token}
+        />
       </main>
     </div>
   );

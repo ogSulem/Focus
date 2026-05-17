@@ -1,17 +1,25 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy';
 import {
   AnalyticsService,
   AnalyticsSummary,
+  ArchetypePayload,
+  BurnoutIndexPayload,
+  FocusDepthPayload,
+  HabitCorrelationPayload,
   HeatmapDay,
+  IntelligencePayload,
   OverviewPayload,
   ProductivityPoint,
   RecommendationPayload,
+  ScenarioSimulatorPayload,
   TrendsPayload,
+  VelocityForecastPayload,
 } from './analytics.service';
+import { ExperimentReport } from '../events/events.service';
 
 @ApiTags('analytics')
 @UseGuards(JwtAuthGuard)
@@ -54,6 +62,34 @@ export class AnalyticsController {
     return this.analyticsService.getRecommendations(user.sub);
   }
 
+  @Get('intelligence')
+  @ApiOperation({
+    summary:
+      'Adaptive planning + risk forecasts + explainable score recommendations',
+  })
+  @ApiQuery({
+    name: 'energy',
+    required: false,
+    enum: ['low', 'medium', 'high'],
+  })
+  getIntelligence(
+    @CurrentUser() user: JwtPayload,
+    @Query('energy') energy?: 'low' | 'medium' | 'high',
+  ): Promise<IntelligencePayload> {
+    return this.analyticsService.getIntelligence(user.sub, energy ?? 'medium');
+  }
+
+  @Get('experiment-report')
+  @ApiOperation({
+    summary:
+      'Scientific before/after report for the last 14 days (7 days vs previous 7 days)',
+  })
+  getExperimentReport(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<ExperimentReport> {
+    return this.analyticsService.getExperimentReport(user.sub);
+  }
+
   @Get('trends')
   @ApiOperation({ summary: 'Week-over-week trends comparison' })
   getTrends(@CurrentUser() user: JwtPayload): Promise<TrendsPayload> {
@@ -66,5 +102,67 @@ export class AnalyticsController {
   })
   getHeatmap(@CurrentUser() user: JwtPayload): Promise<HeatmapDay[]> {
     return this.analyticsService.getHeatmap(user.sub);
+  }
+
+  @Get('burnout-index')
+  @ApiOperation({
+    summary:
+      'Cognitive load / burnout detection index (0–100) with factors and suggestions',
+  })
+  getBurnoutIndex(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<BurnoutIndexPayload> {
+    return this.analyticsService.getBurnoutIndex(user.sub);
+  }
+
+  @Get('archetype')
+  @ApiOperation({
+    summary:
+      'Classify user productivity archetype based on historical task and habit patterns',
+  })
+  getArchetype(@CurrentUser() user: JwtPayload): Promise<ArchetypePayload> {
+    return this.analyticsService.getProductivityArchetype(user.sub);
+  }
+
+  @Get('velocity-forecast')
+  @ApiOperation({
+    summary:
+      'OLS linear regression velocity forecast: predicted completed tasks for next week + confidence interval',
+  })
+  getVelocityForecast(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<VelocityForecastPayload> {
+    return this.analyticsService.getVelocityForecast(user.sub);
+  }
+
+  @Get('focus-depth')
+  @ApiOperation({
+    summary:
+      'Flow State & Deep Work Index: measures cognitive depth from focus session patterns (Csikszentmihalyi model)',
+  })
+  getFocusDepth(@CurrentUser() user: JwtPayload): Promise<FocusDepthPayload> {
+    return this.analyticsService.getFocusDepth(user.sub);
+  }
+
+  @Get('habit-correlation')
+  @ApiOperation({
+    summary:
+      'Pearson lag-1 correlation between each habit completion and next-day task output (60-day window)',
+  })
+  getHabitCorrelation(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<HabitCorrelationPayload> {
+    return this.analyticsService.getHabitCorrelation(user.sub);
+  }
+
+  @Get('scenario-simulator')
+  @ApiOperation({
+    summary:
+      'What-if simulator: predicts weekly productivity impact from focus/habit behavior scenarios',
+  })
+  getScenarioSimulator(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<ScenarioSimulatorPayload> {
+    return this.analyticsService.getScenarioSimulator(user.sub);
   }
 }

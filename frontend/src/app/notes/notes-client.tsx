@@ -68,7 +68,13 @@ export function NotesClient({ token }: NotesClientProps) {
 
   useEffect(() => {
     let cancelled = false;
-    void fetchNotes().then(() => { if (!cancelled) setLoading(false); });
+    const run = async () => {
+      await fetchNotes();
+      if (!cancelled) {
+        setTimeout(() => setLoading(false), 0);
+      }
+    };
+    void run();
     return () => { cancelled = true; };
   }, [fetchNotes]);
 

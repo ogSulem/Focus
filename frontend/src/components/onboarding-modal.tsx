@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 const STORAGE_KEY = 'nt-onboarded';
 
@@ -38,18 +38,15 @@ const STEPS = [
 ];
 
 export function OnboardingModal() {
-  const [visible, setVisible] = useState(false);
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === 'undefined') return false;
     try {
-      if (!localStorage.getItem(STORAGE_KEY)) {
-        setVisible(true);
-      }
+      return !localStorage.getItem(STORAGE_KEY);
     } catch {
-      // SSR or private mode — skip
+      return false;
     }
-  }, []);
+  });
+  const [step, setStep] = useState(0);
 
   function finish() {
     try { localStorage.setItem(STORAGE_KEY, '1'); } catch { /* ignore */ }

@@ -57,20 +57,13 @@ const PHASE_COLOR: Record<Phase, string> = {
 };
 
 export function FocusTimer() {
-  const [phaseSecs, setPhaseSecs] = useState<Record<Phase, number>>(DEFAULT_SECS);
+  const [phaseSecs] = useState<Record<Phase, number>>(() => loadPhaseSecs());
   const [phase, setPhase] = useState<Phase>('focus');
-  const [timeLeft, setTimeLeft] = useState(DEFAULT_SECS['focus']);
+  const [timeLeft, setTimeLeft] = useState(() => loadPhaseSecs()['focus']);
   const [running, setRunning] = useState(false);
   // sessions = completed focus sessions in current cycle (resets after long break)
   const [sessionsDone, setSessionsDone] = useState(0);
   const [totalPomodoros, setTotalPomodoros] = useState(0);
-
-  // Load saved timer settings from localStorage on mount
-  useEffect(() => {
-    const saved = loadPhaseSecs();
-    setPhaseSecs(saved);
-    setTimeLeft(saved['focus']);
-  }, []);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const total = phaseSecs[phase];

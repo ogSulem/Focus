@@ -28,7 +28,7 @@ export function LoginClient() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accessToken: token }),
-      }).then(() => router.replace('/'));
+      }).then(() => router.replace('/dashboard'));
     }
   }, [router]);
 
@@ -67,7 +67,7 @@ export function LoginClient() {
       // Also keep in localStorage for client-side API calls in interactive components
       localStorage.setItem('nt-token', accessToken);
 
-      router.push('/');
+      router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Произошла ошибка');
     } finally {

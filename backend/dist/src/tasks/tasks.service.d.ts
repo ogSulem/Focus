@@ -2,6 +2,7 @@ import { TaskPriority, TaskStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { EventsService } from '../events/events.service';
 export interface TaskStats {
     total: number;
     todo: number;
@@ -30,7 +31,8 @@ export interface BulkUpdateDto {
 }
 export declare class TasksService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly eventsService;
+    constructor(prisma: PrismaService, eventsService: EventsService);
     findAll(userId: string, filter?: TaskFilter): import("@prisma/client").Prisma.PrismaPromise<{
         id: string;
         createdAt: Date;
@@ -61,7 +63,7 @@ export declare class TasksService {
         subtasks: import("@prisma/client/runtime/library").JsonValue;
         userId: string;
     }>;
-    create(userId: string, dto: CreateTaskDto): import("@prisma/client").Prisma.Prisma__TaskClient<{
+    create(userId: string, dto: CreateTaskDto): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -74,7 +76,7 @@ export declare class TasksService {
         tags: string[];
         subtasks: import("@prisma/client/runtime/library").JsonValue;
         userId: string;
-    }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    }>;
     update(userId: string, taskId: string, dto: UpdateTaskDto): Promise<{
         id: string;
         createdAt: Date;
@@ -128,6 +130,6 @@ export declare class TasksService {
     } | {
         affected: number;
         action: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
+        status: "TODO" | "IN_PROGRESS" | "DONE";
     }>;
 }

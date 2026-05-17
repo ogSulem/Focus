@@ -11,11 +11,15 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HabitsService = void 0;
 const common_1 = require("@nestjs/common");
+const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../prisma/prisma.service");
+const events_service_1 = require("../events/events.service");
 let HabitsService = class HabitsService {
     prisma;
-    constructor(prisma) {
+    eventsService;
+    constructor(prisma, eventsService) {
         this.prisma = prisma;
+        this.eventsService = eventsService;
     }
     findAll(userId) {
         return this.prisma.habit.findMany({
@@ -23,13 +27,18 @@ let HabitsService = class HabitsService {
             orderBy: { createdAt: 'desc' },
         });
     }
-    create(userId, dto) {
-        return this.prisma.habit.create({
+    async create(userId, dto) {
+        const habit = await this.prisma.habit.create({
             data: {
                 userId,
                 name: dto.name,
             },
         });
+        await this.eventsService.track(userId, client_1.UserEventType.HABIT_CREATED, {
+            entityId: habit.id,
+            payload: { name: habit.name },
+        });
+        return habit;
     }
     async update(userId, habitId, dto) {
         await this.ensureOwnership(userId, habitId);
@@ -45,23 +54,41 @@ let HabitsService = class HabitsService {
             ? this.extractDays(habit)
             : [...this.extractDays(habit), normalizedDate].sort();
         const streak = this.calculateStreak(completedDays);
-        return this.prisma.habit.update({
+        const updated = await this.prisma.habit.update({
             where: { id: habitId },
             data: {
                 completedDays,
                 streak,
             },
         });
+        await this.eventsService.track(userId, client_1.UserEventType.HABIT_TRACKED, {
+            entityId: updated.id,
+            score: updated.streak,
+            payload: {
+                date: normalizedDate,
+                streak: updated.streak,
+            },
+        });
+        return updated;
     }
     async untrack(userId, habitId, dto) {
         const habit = await this.ensureOwnership(userId, habitId);
         const normalizedDate = dto.date.slice(0, 10);
         const completedDays = this.extractDays(habit).filter((d) => d !== normalizedDate);
         const streak = this.calculateStreak(completedDays);
-        return this.prisma.habit.update({
+        const updated = await this.prisma.habit.update({
             where: { id: habitId },
             data: { completedDays, streak },
         });
+        await this.eventsService.track(userId, client_1.UserEventType.HABIT_UNTRACKED, {
+            entityId: updated.id,
+            score: updated.streak,
+            payload: {
+                date: normalizedDate,
+                streak: updated.streak,
+            },
+        });
+        return updated;
     }
     async getStats(userId) {
         const habits = await this.prisma.habit.findMany({
@@ -120,6 +147,9 @@ let HabitsService = class HabitsService {
     async remove(userId, habitId) {
         await this.ensureOwnership(userId, habitId);
         await this.prisma.habit.delete({ where: { id: habitId } });
+        await this.eventsService.track(userId, client_1.UserEventType.HABIT_DELETED, {
+            entityId: habitId,
+        });
         return { success: true };
     }
     async ensureOwnership(userId, habitId) {
@@ -170,6 +200,7 @@ let HabitsService = class HabitsService {
 exports.HabitsService = HabitsService;
 exports.HabitsService = HabitsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        events_service_1.EventsService])
 ], HabitsService);
 //# sourceMappingURL=habits.service.js.map

@@ -2,6 +2,7 @@
 
 /* ─── Design tokens ─────────────────────────────────────────── */
 :root {
+  --font-inter: 'Inter Variable';
   /* Surfaces */
   --bg-base:    #f4f4f8;
   --bg-card:    rgba(255,255,255,0.90);
@@ -829,4 +830,3 @@ details > summary::-webkit-details-marker { display: none; }
   background: rgba(99,102,241,0.15);
   border-color: rgba(99,102,241,0.25);
 }
-

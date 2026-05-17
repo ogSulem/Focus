@@ -119,6 +119,7 @@ export function Sidebar() {
   const [loggingOut, setLoggingOut] = useState(false);
   const pathname = usePathname();
 
+  const isDashboard = pathname === '/dashboard';
   const isSettings = pathname === '/settings';
   const isKanban = pathname === '/kanban';
   const isAnalytics = pathname === '/analytics';
@@ -127,16 +128,16 @@ export function Sidebar() {
   const isGoals = pathname === '/goals';
 
   const navItems: { icon: React.ReactNode; label: string; href: string; active?: boolean }[] = [
-    { icon: <IconChart />, label: 'Дашборд', href: '/', active: !isSettings && !isKanban && !isAnalytics && !isFocus && !isNotes && !isGoals },
-    { icon: <IconTasks />, label: 'Задачи', href: '/#tasks-section' },
-    { icon: <IconHabits />, label: 'Привычки', href: '/#habits-section' },
+    { icon: <IconChart />, label: 'Дашборд', href: '/dashboard', active: isDashboard },
+    { icon: <IconTasks />, label: 'Задачи', href: '/dashboard#tasks-section' },
+    { icon: <IconHabits />, label: 'Привычки', href: '/dashboard#habits-section' },
     { icon: <IconKanban />, label: 'Kanban', href: '/kanban', active: isKanban },
     { icon: <IconAnalytics />, label: 'Аналитика', href: '/analytics', active: isAnalytics },
     { icon: <IconFocus />, label: 'Focus Mode', href: '/focus', active: isFocus },
     { icon: <IconNotes />, label: 'Заметки', href: '/notes', active: isNotes },
     { icon: <IconGoals />, label: 'Цели', href: '/goals', active: isGoals },
-    { icon: <IconTimer />, label: 'Pomodoro', href: '/#focus-timer' },
-    { icon: <IconBrain />, label: 'AI Инсайты', href: '/#ai-section' },
+    { icon: <IconTimer />, label: 'Pomodoro', href: '/dashboard#focus-timer' },
+    { icon: <IconBrain />, label: 'AI Инсайты', href: '/dashboard#ai-section' },
     { icon: <IconSettings />, label: 'Настройки', href: '/settings', active: isSettings },
   ];
 

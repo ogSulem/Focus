@@ -1,13 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Habit } from '@prisma/client';
+import { Habit, UserEventType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { TrackHabitDto } from './dto/track-habit.dto';
 import { UpdateHabitDto } from './dto/update-habit.dto';
+import { EventsService } from '../events/events.service';
 
 @Injectable()
 export class HabitsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventsService: EventsService,
+  ) {}
 
   findAll(userId: string) {
     return this.prisma.habit.findMany({
@@ -16,13 +20,20 @@ export class HabitsService {
     });
   }
 
-  create(userId: string, dto: CreateHabitDto) {
-    return this.prisma.habit.create({
+  async create(userId: string, dto: CreateHabitDto) {
+    const habit = await this.prisma.habit.create({
       data: {
         userId,
         name: dto.name,
       },
     });
+
+    await this.eventsService.track(userId, UserEventType.HABIT_CREATED, {
+      entityId: habit.id,
+      payload: { name: habit.name },
+    });
+
+    return habit;
   }
 
   async update(userId: string, habitId: string, dto: UpdateHabitDto) {
@@ -44,13 +55,24 @@ export class HabitsService {
 
     const streak = this.calculateStreak(completedDays);
 
-    return this.prisma.habit.update({
+    const updated = await this.prisma.habit.update({
       where: { id: habitId },
       data: {
         completedDays,
         streak,
       },
     });
+
+    await this.eventsService.track(userId, UserEventType.HABIT_TRACKED, {
+      entityId: updated.id,
+      score: updated.streak,
+      payload: {
+        date: normalizedDate,
+        streak: updated.streak,
+      },
+    });
+
+    return updated;
   }
 
   async untrack(userId: string, habitId: string, dto: TrackHabitDto) {
@@ -62,10 +84,21 @@ export class HabitsService {
     );
     const streak = this.calculateStreak(completedDays);
 
-    return this.prisma.habit.update({
+    const updated = await this.prisma.habit.update({
       where: { id: habitId },
       data: { completedDays, streak },
     });
+
+    await this.eventsService.track(userId, UserEventType.HABIT_UNTRACKED, {
+      entityId: updated.id,
+      score: updated.streak,
+      payload: {
+        date: normalizedDate,
+        streak: updated.streak,
+      },
+    });
+
+    return updated;
   }
 
   async getStats(userId: string): Promise<HabitStats[]> {
@@ -138,6 +171,9 @@ export class HabitsService {
   async remove(userId: string, habitId: string) {
     await this.ensureOwnership(userId, habitId);
     await this.prisma.habit.delete({ where: { id: habitId } });
+    await this.eventsService.track(userId, UserEventType.HABIT_DELETED, {
+      entityId: habitId,
+    });
     return { success: true };
   }
 

@@ -6,6 +6,24 @@ import {
 } from 'recharts';
 import { YearlyHeatmap } from '@/components/yearly-heatmap';
 import { HabitStatsCard } from '@/components/habit-stats-card';
+import { IntelligenceStoryCard } from '@/components/intelligence-story-card';
+import { ExperimentReportCard } from '@/components/experiment-report-card';
+import { BurnoutRiskCard } from '@/components/burnout-risk-card';
+import { ArchetypeCard } from '@/components/archetype-card';
+import { VelocityForecastCard } from '@/components/velocity-forecast-card';
+import { FocusDepthCard } from '@/components/focus-depth-card';
+import { HabitCorrelationCard } from '@/components/habit-correlation-card';
+import { ScenarioSimulatorCard } from '@/components/scenario-simulator-card';
+import type {
+  ArchetypePayload,
+  BurnoutIndexPayload,
+  ExperimentReport,
+  FocusDepthPayload,
+  HabitCorrelationPayload,
+  IntelligencePayload,
+  ScenarioSimulatorPayload,
+  VelocityForecastPayload,
+} from '@/lib/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface ProductivityPoint { date: string; completedTasksCount: number; totalTasksCount: number; }
@@ -157,7 +175,31 @@ function EmptyState() {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export function AnalyticsClient({ overview, apiUrl, token }: { overview: OverviewPayload | null; apiUrl?: string; token?: string }) {
+export function AnalyticsClient({
+  overview,
+  scenarioSimulator,
+  intelligence,
+  experimentReport,
+  burnout,
+  archetype,
+  velocityForecast,
+  focusDepth,
+  habitCorrelation,
+  apiUrl,
+  token,
+}: {
+  overview: OverviewPayload | null;
+  scenarioSimulator?: ScenarioSimulatorPayload | null;
+  intelligence?: IntelligencePayload | null;
+  experimentReport?: ExperimentReport | null;
+  burnout?: BurnoutIndexPayload | null;
+  archetype?: ArchetypePayload | null;
+  velocityForecast?: VelocityForecastPayload | null;
+  focusDepth?: FocusDepthPayload | null;
+  habitCorrelation?: HabitCorrelationPayload | null;
+  apiUrl?: string;
+  token?: string;
+}) {
   if (!overview) return <EmptyState />;
 
   const { summary, monthly, trends, activityBuckets, weekByDay, productivityScore } = overview;
@@ -324,7 +366,10 @@ export function AnalyticsClient({ overview, apiUrl, token }: { overview: Overvie
       {/* ── Row 5: Habit statistics ── */}
       <HabitStatsCard />
 
-      {/* ── Row 6: Activity heatmap ── */}
+      {/* ── Row 6: What-if scenario simulator ── */}
+      {scenarioSimulator && <ScenarioSimulatorCard scenarioSimulator={scenarioSimulator} />}
+
+      {/* ── Row 7: Activity heatmap ── */}
       {(apiUrl && token) && (
         <section className="card glow-card animate-slide-up stagger-5" style={{ padding: '22px', overflowX: 'auto' }}>
           <h2 style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: 2 }}>Активность за год</h2>
@@ -332,6 +377,15 @@ export function AnalyticsClient({ overview, apiUrl, token }: { overview: Overvie
           <YearlyHeatmap apiUrl={apiUrl} token={token} />
         </section>
       )}
+
+      {/* ── Row 8+: AI & Research modules ── */}
+      {intelligence && <IntelligenceStoryCard intelligence={intelligence} />}
+      {experimentReport && <ExperimentReportCard report={experimentReport} />}
+      {burnout && <BurnoutRiskCard burnout={burnout} />}
+      {archetype && <ArchetypeCard archetype={archetype} />}
+      {velocityForecast && <VelocityForecastCard forecast={velocityForecast} />}
+      {focusDepth && <FocusDepthCard focusDepth={focusDepth} />}
+      {habitCorrelation && <HabitCorrelationCard habitCorrelation={habitCorrelation} />}
 
     </div>
   );
