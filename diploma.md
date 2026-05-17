@@ -981,14 +981,14 @@ flowchart TD
 4. Next.js Documentation. Vercel Inc., 2024. URL: https://nextjs.org/docs (дата обращения: 14.05.2026).
 5. NestJS Documentation. Kamil Mysliwiec, 2024. URL: https://docs.nestjs.com (дата обращения: 14.05.2026).
 6. Prisma ORM Documentation. Prisma Inc., 2024. URL: https://www.prisma.io/docs (дата обращения: 14.05.2026).
-7. Molnar C. Interpretable Machine Learning: A Guide for Making Black Box Models Explainable. 2nd ed. — 2022. URL: https://christophm.github.io/interpretable-ml-book (accessed: 14.05.2026).
+7. Molnar C. Interpretable Machine Learning: A Guide for Making Black Box Models Explainable. 2nd ed. — 2022. URL: https://christophm.github.io/interpretable-ml-book (дата обращения: 14.05.2026).
 8. Ribeiro M.T., Singh S., Guestrin C. "Why Should I Trust You?": Explaining the Predictions of Any Classifier // Proceedings of KDD-2016. — San Francisco, 2016. — P. 1135–1144.
 9. Guidotti R., Monreale A., Ruggieri S. et al. A Survey of Methods for Explaining Black Box Models // ACM Computing Surveys. — 2019. — Vol. 51. — No. 5. — P. 1–42.
-10. PostgreSQL 16 Documentation. PostgreSQL Global Development Group, 2024. URL: https://www.postgresql.org/docs/16 (accessed: 14.05.2026).
+10. PostgreSQL 16 Documentation. PostgreSQL Global Development Group, 2024. URL: https://www.postgresql.org/docs/16 (дата обращения: 14.05.2026).
 11. Newport C. Deep Work: Rules for Focused Success in a Distracted World. — New York: Grand Central Publishing, 2016. — 296 p.
 12. Allen D. Getting Things Done: The Art of Stress-Free Productivity. Revised Edition. — New York: Penguin Books, 2015. — 352 p.
-13. Recharts Documentation. Recharts Group, 2024. URL: https://recharts.org/en-US (accessed: 14.05.2026).
-14. Docker Documentation. Docker Inc., 2024. URL: https://docs.docker.com (accessed: 14.05.2026).
+13. Recharts Documentation. Recharts Group, 2024. URL: https://recharts.org/en-US (дата обращения: 14.05.2026).
+14. Docker Documentation. Docker Inc., 2024. URL: https://docs.docker.com (дата обращения: 14.05.2026).
 15. ГОСТ 7.32–2017. Система стандартов по информации, библиотечному и издательскому делу. Отчет о научно-исследовательской работе. Структура и правила оформления. — М.: Стандартинформ, 2017.
 16. Открытый исходный код и техническая документация проекта NeuroTrack (README.md). Репозиторий проекта, 2025.
 
