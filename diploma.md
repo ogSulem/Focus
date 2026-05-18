@@ -676,7 +676,8 @@ flowchart TB
 | /tasks/upcoming | GET | Bearer | Задачи с дедлайном 24ч | 200 OK |
 | /tasks/export | GET | Bearer | Экспорт задач (JSON/CSV) | 200 OK |
 | /habits | GET | Bearer | Список привычек | 200 OK |
-| /habits/:id/track | PATCH | Bearer | Фиксация выполнения (идемпотентно по дате, повторный запрос возвращает 200 OK без изменений) | 200 OK |
+| /habits/:id/track | PATCH | Bearer | Фиксация выполнения (идемпотентно по дате) | 200 OK |
+| /habits/:id/untrack | PATCH | Bearer | Снятие отметки выполнения за день | 200 OK |
 | /habits/stats | GET | Bearer | Статистика привычек | 200 OK |
 | /analytics/overview | GET | Bearer | Сводная аналитика | 200 OK |
 | /analytics/heatmap | GET | Bearer | Тепловая карта | 200 OK |
