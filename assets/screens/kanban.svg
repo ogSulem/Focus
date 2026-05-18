@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <rect width="1200" height="700" fill="#f8fafc" />
+  <rect x="0" y="0" width="1200" height="64" fill="#111827" />
+  <text x="24" y="40" font-family="Arial" font-size="22" fill="#ffffff">Kanban-доска</text>
+  <rect x="40" y="110" width="340" height="520" rx="12" fill="#ffffff" stroke="#e5e7eb" />
+  <rect x="430" y="110" width="340" height="520" rx="12" fill="#ffffff" stroke="#e5e7eb" />
+  <rect x="820" y="110" width="340" height="520" rx="12" fill="#ffffff" stroke="#e5e7eb" />
+  <text x="60" y="150" font-family="Arial" font-size="16" fill="#111827">TODO</text>
+  <text x="450" y="150" font-family="Arial" font-size="16" fill="#111827">IN PROGRESS</text>
+  <text x="840" y="150" font-family="Arial" font-size="16" fill="#111827">DONE</text>
+  <rect x="60" y="180" width="300" height="80" rx="10" fill="#e0f2fe" />
+  <rect x="60" y="280" width="300" height="80" rx="10" fill="#e0f2fe" />
+  <rect x="450" y="180" width="300" height="80" rx="10" fill="#fef3c7" />
+  <rect x="840" y="180" width="300" height="80" rx="10" fill="#dcfce7" />
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <rect width="1200" height="700" fill="#f7f7f8" />
+  <rect x="0" y="0" width="1200" height="64" fill="#111827" />
+  <text x="24" y="40" font-family="Arial" font-size="22" fill="#ffffff">NeuroTrack • Dashboard</text>
+  <rect x="0" y="64" width="220" height="636" fill="#1f2937" />
+  <text x="24" y="110" font-family="Arial" font-size="16" fill="#e5e7eb">Навигация</text>
+  <rect x="250" y="96" width="900" height="120" rx="12" fill="#ffffff" stroke="#e5e7eb" />
+  <text x="280" y="130" font-family="Arial" font-size="16" fill="#111827">KPI-метрики дня</text>
+  <rect x="250" y="236" width="430" height="200" rx="12" fill="#ffffff" stroke="#e5e7eb" />
+  <rect x="720" y="236" width="430" height="200" rx="12" fill="#ffffff" stroke="#e5e7eb" />
+  <text x="280" y="270" font-family="Arial" font-size="16" fill="#111827">Список задач</text>
+  <text x="750" y="270" font-family="Arial" font-size="16" fill="#111827">Привычки и streak</text>
+  <rect x="250" y="456" width="900" height="200" rx="12" fill="#ffffff" stroke="#e5e7eb" />
+  <text x="280" y="490" font-family="Arial" font-size="16" fill="#111827">AI-рекомендации и тренды</text>
+</svg>

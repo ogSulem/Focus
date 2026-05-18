@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <rect width="1200" height="700" fill="#f8fafc" />
+  <rect x="0" y="0" width="1200" height="64" fill="#111827" />
+  <text x="24" y="40" font-family="Arial" font-size="22" fill="#ffffff">Аналитика</text>
+  <rect x="60" y="110" width="1080" height="240" rx="12" fill="#ffffff" stroke="#e5e7eb" />
+  <text x="90" y="150" font-family="Arial" font-size="16" fill="#111827">График продуктивности</text>
+  <polyline points="100,300 220,240 340,260 460,210 580,230 700,180 820,200 940,150 1060,190" fill="none" stroke="#2563eb" stroke-width="4" />
+  <rect x="60" y="370" width="520" height="260" rx="12" fill="#ffffff" stroke="#e5e7eb" />
+  <rect x="620" y="370" width="520" height="260" rx="12" fill="#ffffff" stroke="#e5e7eb" />
+  <text x="90" y="410" font-family="Arial" font-size="16" fill="#111827">Heatmap активности</text>
+  <text x="650" y="410" font-family="Arial" font-size="16" fill="#111827">Рекомендации</text>
+</svg>
