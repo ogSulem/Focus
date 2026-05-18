@@ -5,7 +5,7 @@ import { ToastProvider } from '@/components/toast';
 import { KanbanBoard } from './kanban-client';
 import { getDashboardData } from '@/lib/api';
 
-export const metadata = { title: 'Kanban — NeuroTrack' };
+export const metadata = { title: 'Kanban — Focus' };
 
 export default async function KanbanPage() {
   const cookieStore = await cookies();

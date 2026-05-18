@@ -14,7 +14,7 @@ import type {
   VelocityForecastPayload,
 } from '@/lib/api';
 
-export const metadata = { title: 'Analytics — NeuroTrack' };
+export const metadata = { title: 'Analytics — Focus' };
 
 const API_URL =
   process.env.INTERNAL_API_URL ??

@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/sidebar';
 import { ToastProvider } from '@/components/toast';
 import { GoalsClient } from './goals-client';
 
-export const metadata = { title: 'Цели — NeuroTrack' };
+export const metadata = { title: 'Цели — Focus' };
 
 export default async function GoalsPage() {
   const cookieStore = await cookies();

@@ -6,11 +6,11 @@ import { RouteProgress } from '@/components/route-progress';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
 
 export const metadata: Metadata = {
-  title: { default: 'NeuroTrack', template: '%s | NeuroTrack' },
+  title: { default: 'Focus', template: '%s | Focus' },
   description:
     'Your AI-powered productivity hub — tasks, habits, focus timer, and insights in one beautiful app.',
   manifest: '/manifest.json',
-  authors: [{ name: 'NeuroTrack' }],
+  authors: [{ name: 'Focus' }],
   keywords: [
     'productivity',
     'habits',
@@ -24,23 +24,23 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'NeuroTrack',
+    title: 'Focus',
   },
   icons: {
     icon: '/favicon.ico',
     apple: '/icon-192.png',
   },
   openGraph: {
-    title: 'NeuroTrack — AI Productivity Hub',
+    title: 'Focus — AI Productivity Hub',
     description:
       'Your AI-powered productivity hub — tasks, habits, focus timer, and insights in one beautiful app.',
     type: 'website',
     locale: 'en_US',
-    siteName: 'NeuroTrack',
+    siteName: 'Focus',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'NeuroTrack — AI Productivity Hub',
+    title: 'Focus — AI Productivity Hub',
     description:
       'Your AI-powered productivity hub — tasks, habits, focus timer, and insights in one beautiful app.',
   },

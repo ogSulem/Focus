@@ -193,7 +193,7 @@ export function Sidebar() {
               </svg>
             </div>
             <div>
-              <p style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: 1.2 }}>NeuroTrack</p>
+              <p style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: 1.2 }}>Focus</p>
               <p style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>AI Productivity</p>
             </div>
           </div>

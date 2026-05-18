@@ -11,7 +11,7 @@ const common_1 = require("@nestjs/common");
 let AppService = class AppService {
     getStatus() {
         return {
-            service: 'NeuroTrack API',
+            service: 'Focus API',
             status: 'ok',
             timestamp: new Date().toISOString(),
         };

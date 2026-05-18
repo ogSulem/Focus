@@ -537,7 +537,7 @@ export function SettingsClient({ profile, apiUrl, token }: SettingsClientProps) 
         </div>
         <div style={{ marginTop: 16, padding: '12px 14px', background: 'rgba(99,102,241,0.05)', borderRadius: 10, border: '1px solid rgba(99,102,241,0.12)' }}>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', lineHeight: 1.55 }}>
-            🧠 <strong style={{ color: 'var(--text-secondary)' }}>NeuroTrack</strong> — интеллектуальная система планирования и анализа продуктивности.
+            🧠 <strong style={{ color: 'var(--text-secondary)' }}>Focus</strong> — интеллектуальная система планирования и анализа продуктивности.
             Gamification, AI-инсайты, Focus Timer, тепловые карты и полная аналитика в одном месте.
           </p>
         </div>

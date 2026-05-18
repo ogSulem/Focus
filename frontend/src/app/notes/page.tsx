@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/sidebar';
 import { ToastProvider } from '@/components/toast';
 import { NotesClient } from './notes-client';
 
-export const metadata = { title: 'Заметки — NeuroTrack' };
+export const metadata = { title: 'Заметки — Focus' };
 
 export default async function NotesPage() {
   const cookieStore = await cookies();

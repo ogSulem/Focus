@@ -117,7 +117,7 @@ export function LoginClient() {
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
             </svg>
           </div>
-          <h1 className="gradient-text" style={{ fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.03em' }}>NeuroTrack</h1>
+          <h1 className="gradient-text" style={{ fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.03em' }}>Focus</h1>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: 4 }}>
             Интеллектуальная система планирования
           </p>

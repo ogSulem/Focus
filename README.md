@@ -1,4 +1,4 @@
-# NeuroTrack — AI Productivity System
+# Focus — AI Productivity System
 
 > Интеллектуальная система планирования и анализа продуктивности пользователя  
 > **Дипломный проект · Next.js 16 + NestJS 11 + PostgreSQL + Docker**

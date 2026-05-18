@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/sidebar';
 import { ToastProvider } from '@/components/toast';
 import { SettingsClient } from './settings-client';
 
-export const metadata = { title: 'Настройки — NeuroTrack' };
+export const metadata = { title: 'Настройки — Focus' };
 
 export default async function SettingsPage() {
   const cookieStore = await cookies();
