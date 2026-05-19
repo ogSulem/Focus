@@ -10,7 +10,7 @@ def render_mermaid(input_md: Path, output_md: Path, mermaid_dir: Path) -> int:
             f"Ошибка: не удалось прочитать {input_md}: {type(exc).__name__}: {exc}",
             file=sys.stderr,
         )
-        raise SystemExit(1)
+        sys.exit(1)
 
     mermaid_dir.mkdir(parents=True, exist_ok=True)
     lines = text.splitlines()
@@ -36,7 +36,7 @@ def render_mermaid(input_md: Path, output_md: Path, mermaid_dir: Path) -> int:
                     f"Ошибка: не удалось записать {diagram_path}: {type(exc).__name__}: {exc}",
                     file=sys.stderr,
                 )
-                raise SystemExit(1)
+                sys.exit(1)
             out_lines.append(f"![](mermaid/diagram-{counter}.png)")
             in_mermaid = False
             buffer = []
@@ -53,13 +53,13 @@ def render_mermaid(input_md: Path, output_md: Path, mermaid_dir: Path) -> int:
             f"Ошибка: не удалось записать {output_md}: {type(exc).__name__}: {exc}",
             file=sys.stderr,
         )
-        raise SystemExit(1)
+        sys.exit(1)
     return counter
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
-        raise SystemExit("Usage: render_mermaid.py <input_md> <output_md> <mermaid_dir>")
+        sys.exit("Usage: render_mermaid.py <input_md> <output_md> <mermaid_dir>")
     input_path = Path(sys.argv[1])
     output_path = Path(sys.argv[2])
     mermaid_path = Path(sys.argv[3])

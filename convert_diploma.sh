@@ -66,7 +66,7 @@ MERMAID_OUTPUT="$(python3 "${MERMAID_RENDERER}" "${INPUT_MD}" "${RENDERED_MD}" "
 MERMAID_COUNT="${MERMAID_OUTPUT}"
 
 if [[ -z "${MERMAID_COUNT}" ]] || [[ ! "${MERMAID_COUNT}" =~ ^[0-9]+$ ]]; then
-  echo "Ошибка: некорректное число диаграмм mermaid: ${MERMAID_COUNT}" >&2
+  echo "Ошибка: некорректное число диаграмм mermaid." >&2
   exit 1
 fi
 
