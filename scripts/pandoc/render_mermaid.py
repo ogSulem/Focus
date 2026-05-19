@@ -6,7 +6,10 @@ def render_mermaid(input_md: Path, output_md: Path, mermaid_dir: Path) -> int:
     try:
         text = input_md.read_text()
     except Exception as exc:
-        print(f"Ошибка: не удалось прочитать {input_md}: {exc}", file=sys.stderr)
+        print(
+            f"Ошибка: не удалось прочитать {input_md}: {type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
         raise SystemExit(1)
 
     mermaid_dir.mkdir(parents=True, exist_ok=True)
@@ -29,7 +32,10 @@ def render_mermaid(input_md: Path, output_md: Path, mermaid_dir: Path) -> int:
             try:
                 diagram_path.write_text(content)
             except Exception as exc:
-                print(f"Ошибка: не удалось записать {diagram_path}: {exc}", file=sys.stderr)
+                print(
+                    f"Ошибка: не удалось записать {diagram_path}: {type(exc).__name__}: {exc}",
+                    file=sys.stderr,
+                )
                 raise SystemExit(1)
             out_lines.append(f"![](mermaid/diagram-{counter}.png)")
             in_mermaid = False
@@ -43,7 +49,10 @@ def render_mermaid(input_md: Path, output_md: Path, mermaid_dir: Path) -> int:
     try:
         output_md.write_text("\n".join(out_lines) + "\n")
     except Exception as exc:
-        print(f"Ошибка: не удалось записать {output_md}: {exc}", file=sys.stderr)
+        print(
+            f"Ошибка: не удалось записать {output_md}: {type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
         raise SystemExit(1)
     return counter
 
