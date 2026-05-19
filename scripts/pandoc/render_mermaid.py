@@ -59,7 +59,11 @@ def render_mermaid(input_md: Path, output_md: Path, mermaid_dir: Path) -> int:
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
-        sys.exit("Usage: render_mermaid.py <input_md> <output_md> <mermaid_dir>")
+        print(
+            "Usage: render_mermaid.py <input_md> <output_md> <mermaid_dir>",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     input_path = Path(sys.argv[1])
     output_path = Path(sys.argv[2])
     mermaid_path = Path(sys.argv[3])

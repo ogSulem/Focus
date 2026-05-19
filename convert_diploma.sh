@@ -65,6 +65,7 @@ MERMAID_OUTPUT="$(python3 "${MERMAID_RENDERER}" "${INPUT_MD}" "${RENDERED_MD}" "
 }
 MERMAID_COUNT="${MERMAID_OUTPUT}"
 
+# 0 is valid when there are no mermaid blocks.
 if [[ -z "${MERMAID_COUNT}" ]] || [[ ! "${MERMAID_COUNT}" =~ ^[0-9]+$ ]]; then
   echo "Ошибка: некорректное число диаграмм mermaid." >&2
   exit 1
