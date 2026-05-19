@@ -3,7 +3,14 @@ import sys
 
 
 def render_mermaid(input_md: Path, output_md: Path, mermaid_dir: Path) -> int:
-    lines = input_md.read_text().splitlines()
+    try:
+        text = input_md.read_text()
+    except Exception as exc:
+        print(f"Ошибка: не удалось прочитать {input_md}: {exc}", file=sys.stderr)
+        raise SystemExit(1)
+
+    mermaid_dir.mkdir(parents=True, exist_ok=True)
+    lines = text.splitlines()
     out_lines: list[str] = []
     counter = 0
     in_mermaid = False
@@ -18,7 +25,12 @@ def render_mermaid(input_md: Path, output_md: Path, mermaid_dir: Path) -> int:
         if stripped == "```" and in_mermaid:
             counter += 1
             content = "\n".join(buffer).rstrip() + "\n"
-            (mermaid_dir / f"diagram-{counter}.mmd").write_text(content)
+            diagram_path = mermaid_dir / f"diagram-{counter}.mmd"
+            try:
+                diagram_path.write_text(content)
+            except Exception as exc:
+                print(f"Ошибка: не удалось записать {diagram_path}: {exc}", file=sys.stderr)
+                raise SystemExit(1)
             out_lines.append(f"![](mermaid/diagram-{counter}.png)")
             in_mermaid = False
             buffer = []
@@ -28,7 +40,11 @@ def render_mermaid(input_md: Path, output_md: Path, mermaid_dir: Path) -> int:
         else:
             out_lines.append(line)
 
-    output_md.write_text("\n".join(out_lines) + "\n")
+    try:
+        output_md.write_text("\n".join(out_lines) + "\n")
+    except Exception as exc:
+        print(f"Ошибка: не удалось записать {output_md}: {exc}", file=sys.stderr)
+        raise SystemExit(1)
     return counter
 
 

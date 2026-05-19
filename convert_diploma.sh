@@ -59,7 +59,16 @@ trap cleanup EXIT
 
 mkdir -p "${MERMAID_DIR}"
 
-MERMAID_COUNT="$(python3 "${MERMAID_RENDERER}" "${INPUT_MD}" "${RENDERED_MD}" "${MERMAID_DIR}")"
+MERMAID_OUTPUT="$(python3 "${MERMAID_RENDERER}" "${INPUT_MD}" "${RENDERED_MD}" "${MERMAID_DIR}")" || {
+  echo "Ошибка: скрипт подготовки mermaid завершился с ошибкой." >&2
+  exit 1
+}
+MERMAID_COUNT="${MERMAID_OUTPUT}"
+
+if [[ ! "${MERMAID_COUNT}" =~ ^[0-9]+$ ]]; then
+  echo "Ошибка: некорректное число диаграмм mermaid: ${MERMAID_COUNT}" >&2
+  exit 1
+fi
 
 if [[ "${MERMAID_COUNT}" -gt 0 ]]; then
   for ((i=1; i<=MERMAID_COUNT; i++)); do

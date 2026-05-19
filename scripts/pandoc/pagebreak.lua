@@ -7,4 +7,5 @@ function RawBlock(el)
       return pandoc.RawBlock('openxml', pagebreak_xml)
     end
   end
+  return nil
 end
