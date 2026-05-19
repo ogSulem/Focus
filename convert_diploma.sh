@@ -10,6 +10,7 @@ INPUT_MD="${ROOT_DIR}/diploma.md"
 OUTPUT_DOCX="${ROOT_DIR}/diploma.docx"
 REFERENCE_DOCX="${ROOT_DIR}/reference.docx"
 PAGEBREAK_FILTER="${ROOT_DIR}/scripts/pandoc/pagebreak.lua"
+MERMAID_RENDERER="${ROOT_DIR}/scripts/pandoc/render_mermaid.py"
 
 if ! command -v pandoc >/dev/null 2>&1; then
   echo "Ошибка: pandoc не найден. Установите pandoc и повторите запуск." >&2
@@ -42,6 +43,11 @@ if [[ ! -f "${PAGEBREAK_FILTER}" ]]; then
   exit 1
 fi
 
+if [[ ! -f "${MERMAID_RENDERER}" ]]; then
+  echo "Ошибка: не найден скрипт ${MERMAID_RENDERER}" >&2
+  exit 1
+fi
+
 TMP_DIR="$(mktemp -d)"
 MERMAID_DIR="${TMP_DIR}/mermaid"
 RENDERED_MD="${TMP_DIR}/diploma.rendered.md"
@@ -53,42 +59,7 @@ trap cleanup EXIT
 
 mkdir -p "${MERMAID_DIR}"
 
-MERMAID_COUNT="$(python3 - "${INPUT_MD}" "${RENDERED_MD}" "${MERMAID_DIR}" <<'PY'
-from pathlib import Path
-import sys
-
-input_md = Path(sys.argv[1])
-output_md = Path(sys.argv[2])
-mermaid_dir = Path(sys.argv[3])
-
-lines = input_md.read_text().splitlines()
-out_lines = []
-counter = 0
-in_mermaid = False
-buffer = []
-
-for line in lines:
-    if line.strip().startswith("```mermaid") and not in_mermaid:
-        in_mermaid = True
-        buffer = []
-        continue
-    if line.strip().startswith("```") and in_mermaid:
-        counter += 1
-        content = "\n".join(buffer).rstrip() + "\n"
-        (mermaid_dir / f"diagram-{counter}.mmd").write_text(content)
-        out_lines.append(f"![](mermaid/diagram-{counter}.png)")
-        in_mermaid = False
-        buffer = []
-        continue
-    if in_mermaid:
-        buffer.append(line)
-    else:
-        out_lines.append(line)
-
-output_md.write_text("\n".join(out_lines) + "\n")
-print(counter)
-PY
-)"
+MERMAID_COUNT="$(python3 "${MERMAID_RENDERER}" "${INPUT_MD}" "${RENDERED_MD}" "${MERMAID_DIR}")"
 
 if [[ "${MERMAID_COUNT}" -gt 0 ]]; then
   for ((i=1; i<=MERMAID_COUNT; i++)); do

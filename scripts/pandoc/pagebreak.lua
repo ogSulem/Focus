@@ -1,3 +1,4 @@
+-- Converts LaTeX-style page breaks to Word OpenXML page breaks for Pandoc DOCX output.
 local pagebreak_xml = '<w:p><w:r><w:br w:type="page"/></w:r></w:p>'
 
 function RawBlock(el)
