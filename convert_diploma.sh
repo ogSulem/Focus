@@ -42,7 +42,7 @@ if [[ ! -f "${PAGEBREAK_FILTER}" ]]; then
   exit 1
 fi
 
-TMP_DIR="$(mktemp -d /tmp/focus-docx-XXXXXX)"
+TMP_DIR="$(mktemp -d)"
 MERMAID_DIR="${TMP_DIR}/mermaid"
 RENDERED_MD="${TMP_DIR}/diploma.rendered.md"
 
@@ -54,7 +54,6 @@ trap cleanup EXIT
 mkdir -p "${MERMAID_DIR}"
 
 MERMAID_COUNT="$(python3 - "${INPUT_MD}" "${RENDERED_MD}" "${MERMAID_DIR}" <<'PY'
-import re
 from pathlib import Path
 import sys
 
@@ -62,19 +61,31 @@ input_md = Path(sys.argv[1])
 output_md = Path(sys.argv[2])
 mermaid_dir = Path(sys.argv[3])
 
-text = input_md.read_text()
-pattern = re.compile(r"```mermaid\\s*(.*?)```", re.S)
+lines = input_md.read_text().splitlines()
+out_lines = []
 counter = 0
+in_mermaid = False
+buffer = []
 
-def repl(match):
-    global counter
-    counter += 1
-    content = match.group(1).strip() + "\\n"
-    (mermaid_dir / f"diagram-{counter}.mmd").write_text(content)
-    return f"![](mermaid/diagram-{counter}.png)\\n"
+for line in lines:
+    if line.strip().startswith("```mermaid") and not in_mermaid:
+        in_mermaid = True
+        buffer = []
+        continue
+    if line.strip().startswith("```") and in_mermaid:
+        counter += 1
+        content = "\n".join(buffer).rstrip() + "\n"
+        (mermaid_dir / f"diagram-{counter}.mmd").write_text(content)
+        out_lines.append(f"![](mermaid/diagram-{counter}.png)")
+        in_mermaid = False
+        buffer = []
+        continue
+    if in_mermaid:
+        buffer.append(line)
+    else:
+        out_lines.append(line)
 
-text = pattern.sub(repl, text)
-output_md.write_text(text)
+output_md.write_text("\n".join(out_lines) + "\n")
 print(counter)
 PY
 )"
