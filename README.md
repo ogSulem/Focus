@@ -236,6 +236,7 @@ cd frontend && npm run lint && npm run build
 - `defense/presentation.md` — структура презентации (9–10 слайдов).
 - `defense/questions_and_answers.md` — список типовых вопросов комиссии и ответы.
 - `defense/demo_script.md` — сценарий демонстрации продукта (включая формат до 60 секунд).
+- `defense/originality_checklist.md` — чеклист академической добросовестности и текстовой уникальности.
 
 ---
 
