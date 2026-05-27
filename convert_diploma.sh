@@ -11,6 +11,7 @@ OUTPUT_DOCX="${ROOT_DIR}/diploma.docx"
 REFERENCE_DOCX="${ROOT_DIR}/reference.docx"
 PAGEBREAK_FILTER="${ROOT_DIR}/scripts/pandoc/pagebreak.lua"
 MERMAID_RENDERER="${ROOT_DIR}/scripts/pandoc/render_mermaid.py"
+REFERENCE_BUILDER="${ROOT_DIR}/scripts/pandoc/build_reference_docx.sh"
 
 if ! command -v pandoc >/dev/null 2>&1; then
   echo "Ошибка: pandoc не найден. Установите pandoc и повторите запуск." >&2
@@ -33,9 +34,17 @@ if [[ ! -f "${INPUT_MD}" ]]; then
 fi
 
 if [[ ! -f "${REFERENCE_DOCX}" ]]; then
-  echo "Ошибка: ${REFERENCE_DOCX} не найден." >&2
-  echo "Для полного соответствия методичке положите официальный шаблон Word в reference.docx." >&2
-  exit 1
+  echo "Предупреждение: ${REFERENCE_DOCX} не найден." >&2
+  echo "Пробую автоматически сгенерировать базовый шаблон reference.docx..." >&2
+  if [[ ! -f "${REFERENCE_BUILDER}" ]]; then
+    echo "Ошибка: не найден скрипт генерации ${REFERENCE_BUILDER}" >&2
+    exit 1
+  fi
+  bash "${REFERENCE_BUILDER}" "${REFERENCE_DOCX}" || {
+    echo "Ошибка: не удалось создать ${REFERENCE_DOCX}." >&2
+    echo "Положите официальный шаблон вуза в ${REFERENCE_DOCX} и повторите запуск." >&2
+    exit 1
+  }
 fi
 
 if [[ ! -f "${PAGEBREAK_FILTER}" ]]; then
