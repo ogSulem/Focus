@@ -94,6 +94,8 @@ fi
 pandoc "${RENDERED_MD}" \
   --from markdown+raw_tex \
   --to docx \
+  --toc \
+  --toc-depth=3 \
   --reference-doc "${REFERENCE_DOCX}" \
   --resource-path="${ROOT_DIR}:${TMP_DIR}" \
   --lua-filter "${PAGEBREAK_FILTER}" \
