@@ -74,7 +74,7 @@ MERMAID_OUTPUT="$(python3 "${MERMAID_RENDERER}" "${INPUT_MD}" "${RENDERED_MD}" "
 }
 MERMAID_COUNT="${MERMAID_OUTPUT}"
 
-# 0 is valid when there are no mermaid blocks.
+# Значение "0" корректно, если mermaid-блоков нет; пустой вывод считается ошибкой.
 if [[ -z "${MERMAID_COUNT}" ]]; then
   echo "Ошибка: скрипт подготовки mermaid вернул пустое значение числа диаграмм." >&2
   exit 1
