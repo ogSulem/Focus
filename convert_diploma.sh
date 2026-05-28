@@ -75,8 +75,13 @@ MERMAID_OUTPUT="$(python3 "${MERMAID_RENDERER}" "${INPUT_MD}" "${RENDERED_MD}" "
 MERMAID_COUNT="${MERMAID_OUTPUT}"
 
 # 0 is valid when there are no mermaid blocks.
-if [[ -z "${MERMAID_COUNT}" ]] || [[ ! "${MERMAID_COUNT}" =~ ^[0-9]+$ ]]; then
-  echo "Ошибка: некорректное число диаграмм mermaid." >&2
+if [[ -z "${MERMAID_COUNT}" ]]; then
+  echo "Ошибка: скрипт подготовки mermaid вернул пустое значение числа диаграмм." >&2
+  exit 1
+fi
+
+if [[ ! "${MERMAID_COUNT}" =~ ^[0-9]+$ ]]; then
+  echo "Ошибка: скрипт подготовки mermaid вернул нечисловое значение: '${MERMAID_COUNT}'." >&2
   exit 1
 fi
 
