@@ -5,7 +5,7 @@ import { FocusModeClient } from './focus-client';
 import { getDashboardData } from '@/lib/api';
 
 export const metadata: Metadata = {
-  title: 'Focus Mode — NeuroTrack',
+  title: 'Focus Mode — Focus',
   description: 'Distraction-free deep work mode',
 };
 

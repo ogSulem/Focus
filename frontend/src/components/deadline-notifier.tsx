@@ -80,7 +80,7 @@ export function NotificationPermissionButton() {
     const perm = await Notification.requestPermission();
     setHidden(true);
     if (perm === 'granted') {
-      new Notification('NeuroTrack', {
+      new Notification('Focus', {
         body: 'Уведомления включены! Вы будете получать напоминания о дедлайнах.',
         icon: '/icon-192.png',
       });

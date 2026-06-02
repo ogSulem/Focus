@@ -18,7 +18,7 @@ describe('AppController', () => {
   describe('health', () => {
     it('should return service health payload', () => {
       const payload = appController.getHealth();
-      assert.equal(payload.service, 'NeuroTrack API');
+      assert.equal(payload.service, 'Focus API');
       assert.equal(payload.status, 'ok');
       assert.equal(typeof payload.timestamp, 'string');
     });

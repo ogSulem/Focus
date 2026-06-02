@@ -279,7 +279,7 @@ export function FocusModeClient({ tasks, apiUrl, token }: FocusModeClientProps) 
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
               </svg>
             </div>
-            <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>NeuroTrack</span>
+            <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>Focus</span>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>Focus Mode</span>
           </div>
           <ThemeToggle />

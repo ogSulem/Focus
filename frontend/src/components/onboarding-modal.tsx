@@ -7,7 +7,7 @@ const STORAGE_KEY = 'nt-onboarded';
 const STEPS = [
   {
     emoji: '🧠',
-    title: 'Добро пожаловать в NeuroTrack!',
+    title: 'Добро пожаловать в Focus!',
     desc: 'Интеллектуальная система для управления задачами, привычками и анализа продуктивности.',
     color: '#6366f1',
   },

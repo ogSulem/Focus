@@ -58,7 +58,7 @@ export default async function LandingPage() {
               </svg>
             </div>
             <div>
-              <p style={{ fontWeight: 800, fontSize: '0.95rem' }}>NeuroTrack</p>
+              <p style={{ fontWeight: 800, fontSize: '0.95rem' }}>Focus</p>
               <p style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>AI Productivity Platform</p>
             </div>
           </div>
@@ -79,7 +79,7 @@ export default async function LandingPage() {
             Всё управление продуктивностью в одном месте
           </h1>
           <p style={{ maxWidth: 700, color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: 18 }}>
-            NeuroTrack объединяет задачи, привычки, фокус-сессии, аналитику и AI-рекомендации в один удобный интерфейс.
+            Focus объединяет задачи, привычки, фокус-сессии, аналитику и AI-рекомендации в один удобный интерфейс.
             Без лишнего — только инструмент, который помогает делать больше каждый день.
           </p>
 

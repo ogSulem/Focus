@@ -119,7 +119,7 @@ export default async function Home() {
                 fontWeight: 800,
                 letterSpacing: '-0.02em',
               }}>
-                NeuroTrack
+                Focus
               </h1>
               <span className={`badge badge-${data.mode === 'demo' ? 'progress' : 'done'}`} style={{ fontSize: '0.68rem' }}>
                 {data.mode === 'demo' ? 'Demo' : '● Live'}
@@ -453,7 +453,7 @@ export default async function Home() {
 
         {/* ── Footer ── */}
         <footer style={{ textAlign: 'center', padding: '12px 0 4px', color: 'var(--text-tertiary)', fontSize: '0.72rem' }}>
-          NeuroTrack · AI Productivity System · v10.0
+          Focus · AI Productivity System · v10.0
           <span style={{ marginLeft: 12 }}>
             <kbd style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: 'var(--border)', borderRadius: 4, padding: '1px 5px', color: 'var(--text-tertiary)' }}>⌘K</kbd> поиск ·&nbsp;
             <kbd style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: 'var(--border)', borderRadius: 4, padding: '1px 5px', color: 'var(--text-tertiary)' }}>N</kbd> задача ·&nbsp;

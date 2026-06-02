@@ -1,4 +1,4 @@
-# NeuroTrack — AI Productivity System
+# Focus — AI Productivity System
 
 > Интеллектуальная система планирования и анализа продуктивности пользователя  
 > **Дипломный проект · Next.js 16 + NestJS 11 + PostgreSQL + Docker**
@@ -215,6 +215,28 @@ cd backend && npm run lint && npm run build && npm test
 # Frontend
 cd frontend && npm run lint && npm run build
 ```
+
+---
+
+## Материалы ВКР и защита
+
+### Конвертация `diploma.md` в DOCX
+
+```bash
+./convert_diploma.sh
+```
+
+- Скрипт поддерживает `mermaid`-диаграммы и разрывы страниц.
+- Если `reference.docx` отсутствует, он будет сгенерирован автоматически из `scripts/pandoc/reference-template.md`.
+- Для максимального совпадения с вузовским оформлением можно заменить `reference.docx` на официальный Word-шаблон.
+
+### Материалы к предзащите/защите
+
+- `defense/report_speech.md` — готовый текст доклада до 5 минут.
+- `defense/presentation.md` — структура презентации (9–10 слайдов).
+- `defense/questions_and_answers.md` — список типовых вопросов комиссии и ответы.
+- `defense/demo_script.md` — сценарий демонстрации продукта (включая формат до 60 секунд).
+- `defense/originality_checklist.md` — чеклист академической добросовестности и текстовой уникальности.
 
 ---
 

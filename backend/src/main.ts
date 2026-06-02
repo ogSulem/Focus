@@ -37,7 +37,7 @@ async function bootstrap() {
 
   // Swagger
   const config = new DocumentBuilder()
-    .setTitle('NeuroTrack API')
+    .setTitle('Focus API')
     .setDescription('Intelligent productivity planning and analysis system')
     .setVersion('1.0')
     .addBearerAuth()

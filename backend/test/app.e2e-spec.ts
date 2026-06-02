@@ -24,7 +24,7 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .expect((response) => {
         const body = response.body as Record<string, unknown>;
-        assert.equal(body['service'], 'NeuroTrack API');
+        assert.equal(body['service'], 'Focus API');
         assert.equal(body['status'], 'ok');
       });
   });

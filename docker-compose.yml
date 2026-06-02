@@ -3,24 +3,24 @@ version: '3.9'
 services:
   db:
     image: postgres:16-alpine
-    container_name: neurotrack_db
+    container_name: focus_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: neurotrack
-      POSTGRES_PASSWORD: neurotrack_secret
-      POSTGRES_DB: neurotrack
+      POSTGRES_USER: focus
+      POSTGRES_PASSWORD: focus_secret
+      POSTGRES_DB: focus
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U neurotrack -d neurotrack']
+      test: ['CMD-SHELL', 'pg_isready -U focus -d focus']
       interval: 5s
       timeout: 5s
       retries: 10
     networks:
-      - neurotrack_net
+      - focus_net
 
   backend:
-    container_name: neurotrack_backend
+    container_name: focus_backend
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -29,7 +29,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://neurotrack:neurotrack_secret@db:5432/neurotrack
+      DATABASE_URL: postgresql://focus:focus_secret@db:5432/focus
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-change_me_access_secret_256}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change_me_refresh_secret_256}
       JWT_ACCESS_EXPIRES_IN: 15m
@@ -40,10 +40,10 @@ services:
     ports:
       - '3001:3001'
     networks:
-      - neurotrack_net
+      - focus_net
 
   frontend:
-    container_name: neurotrack_frontend
+    container_name: focus_frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -60,11 +60,11 @@ services:
     ports:
       - '3000:3000'
     networks:
-      - neurotrack_net
+      - focus_net
 
 volumes:
   pg_data:
 
 networks:
-  neurotrack_net:
+  focus_net:
     driver: bridge

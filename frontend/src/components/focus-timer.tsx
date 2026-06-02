@@ -136,12 +136,12 @@ export function FocusTimer() {
   // Update document title with timer countdown
   useEffect(() => {
     if (running) {
-      document.title = `${mm}:${ss} ${PHASE_LABEL[phase]} | NeuroTrack`;
+      document.title = `${mm}:${ss} ${PHASE_LABEL[phase]} | Focus`;
     } else {
-      document.title = 'NeuroTrack';
+      document.title = 'Focus';
     }
     return () => {
-      document.title = 'NeuroTrack';
+      document.title = 'Focus';
     };
   }, [mm, ss, running, phase]);
 

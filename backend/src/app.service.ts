@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class AppService {
   getStatus() {
     return {
-      service: 'NeuroTrack API',
+      service: 'Focus API',
       status: 'ok',
       timestamp: new Date().toISOString(),
     };

@@ -32,7 +32,7 @@ async function bootstrap() {
     app.useGlobalFilters(new all_exceptions_filter_1.AllExceptionsFilter());
     app.useGlobalInterceptors(new transform_interceptor_1.TransformInterceptor());
     const config = new swagger_1.DocumentBuilder()
-        .setTitle('NeuroTrack API')
+        .setTitle('Focus API')
         .setDescription('Intelligent productivity planning and analysis system')
         .setVersion('1.0')
         .addBearerAuth()
